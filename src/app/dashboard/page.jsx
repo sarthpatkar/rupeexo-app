@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 /* ─────────────────────────────────────────────
    DUMMY DATA
@@ -123,6 +125,7 @@ function Badge({ children, variant = 'neutral' }) {
 ───────────────────────────────────────────── */
 
 function Navbar() {
+  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const NAV = ['Dashboard', 'Portfolio', 'Analysis', 'Watchlist'];
 
@@ -130,12 +133,12 @@ function Navbar() {
     <nav className="sticky top-0 z-50 bg-white border-b border-slate-200">
       <div className="max-w-7xl mx-auto px-6 md:px-8 h-14 flex items-center justify-between">
         {/* Logo */}
-        <a href="/" className="flex items-center gap-2 select-none">
+        <Link href="/" className="flex items-center gap-2 select-none">
           <div className="w-6 h-6 rounded bg-[#1e3a8a] flex items-center justify-center">
             <span className="text-white text-xs font-bold">R</span>
           </div>
           <span className="text-[#0f172a] font-semibold text-base tracking-tight">Rupeexo</span>
-        </a>
+        </Link>
 
         {/* Desktop nav */}
         <div className="hidden md:flex items-center gap-1">
@@ -162,7 +165,7 @@ function Navbar() {
             </div>
             <span className="text-sm text-slate-600 font-medium">Arjun M.</span>
           </div>
-          <OutlineButton className="text-xs px-4 py-2">Logout</OutlineButton>
+          <OutlineButton className="text-xs px-4 py-2" onClick={() => router.push('/login')}>Logout</OutlineButton>
         </div>
 
         <button
@@ -181,7 +184,7 @@ function Navbar() {
               {item}
             </a>
           ))}
-          <OutlineButton className="mt-1 w-full text-xs">Logout</OutlineButton>
+          <OutlineButton className="mt-1 w-full text-xs" onClick={() => router.push('/login')}>Logout</OutlineButton>
         </div>
       )}
     </nav>

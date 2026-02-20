@@ -1,6 +1,8 @@
 "use client"
 
 import { useState, useId } from "react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 // ─── Internal Helper Components ───────────────────────────────────────────────
 
@@ -126,6 +128,7 @@ function validateForm(form) {
 // ─── Page Component ───────────────────────────────────────────────────────────
 
 export default function LoginPage() {
+  const router = useRouter()
   const emailId = useId()
   const passwordId = useId()
   const rememberId = useId()
