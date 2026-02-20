@@ -1,5 +1,6 @@
 'use client';
 
+import Link from "next/link";
 import { useState } from 'react';
 
 /* ─────────────────────────────────────────────
@@ -133,23 +134,23 @@ function Badge({ children }) {
 
 function PrimaryButton({ children, href = '#', className = '' }) {
   return (
-    <a
+    <Link
       href={href}
       className={`inline-flex items-center justify-center px-5 py-2.5 rounded-lg bg-[#1e3a8a] hover:bg-[#1e40af] text-white text-sm font-medium transition-colors duration-150 ${className}`}
     >
       {children}
-    </a>
+    </Link>
   );
 }
 
 function OutlineButton({ children, href = '#', className = '' }) {
   return (
-    <a
+    <Link
       href={href}
       className={`inline-flex items-center justify-center px-5 py-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-sm font-medium transition-colors duration-150 ${className}`}
     >
       {children}
-    </a>
+    </Link>
   );
 }
 
@@ -328,12 +329,12 @@ function Navbar() {
   return (
     <nav className="sticky top-0 z-50 bg-white border-b border-slate-200">
       <div className="max-w-7xl mx-auto px-6 md:px-8 h-14 flex items-center justify-between">
-        <a href="#" className="flex items-center gap-2 select-none">
+        <Link href="/" className="flex items-center gap-2 select-none">
           <div className="w-6 h-6 rounded bg-[#1e3a8a] flex items-center justify-center">
             <span className="text-white text-xs font-bold">R</span>
           </div>
           <span className="text-[#0f172a] font-semibold text-base tracking-tight">Rupeexo</span>
-        </a>
+        </Link>
 
         <div className="hidden md:flex items-center gap-7">
           {NAV_LINKS.map((l) => (
@@ -345,8 +346,8 @@ function Navbar() {
         </div>
 
         <div className="hidden md:flex items-center gap-3">
-          <a href="#" className="text-sm text-slate-600 hover:text-[#1e3a8a] transition-colors duration-150">Log in</a>
-          <PrimaryButton>Enter Dashboard →</PrimaryButton>
+          <Link href="/login" className="text-sm text-slate-600 hover:text-[#1e3a8a] transition-colors duration-150">Log in</Link>
+          <PrimaryButton href="/dashboard">Enter Dashboard →</PrimaryButton>
         </div>
 
         <button className="md:hidden p-2 text-slate-600" onClick={() => setOpen(!open)} aria-label="Toggle menu">
@@ -388,7 +389,7 @@ function Hero() {
               Built for investors who read balance sheets, think in decades, and refuse to act on speculation. If that's you, you're in the right place.
             </p>
             <div className="mt-8 flex flex-wrap gap-3 items-center">
-              <PrimaryButton href="#platform" className="px-6 py-3 text-base">Explore the Platform →</PrimaryButton>
+              <PrimaryButton href="/login" className="px-6 py-3 text-base">Explore the Platform →</PrimaryButton>
               <OutlineButton href="#how-it-works" className="px-6 py-3 text-base">See How It Works</OutlineButton>
             </div>
             <p className="mt-5 text-xs text-slate-400">No noise. No hype. No unsolicited recommendations. Ever.</p>
@@ -709,8 +710,8 @@ function CTA() {
             Join thousands of disciplined investors who use Rupeexo to cut through the noise and build portfolios grounded in fundamentals.
           </p>
           <div className="flex flex-wrap justify-center gap-3 mb-6">
-            <PrimaryButton href="#" className="px-7 py-3 text-base">Start for Free →</PrimaryButton>
-            <OutlineButton href="#" className="px-7 py-3 text-base">Schedule a Demo</OutlineButton>
+            <PrimaryButton href="/login" className="px-7 py-3 text-base">Start for Free →</PrimaryButton>
+            <OutlineButton href="/login" className="px-7 py-3 text-base">Schedule a Demo</OutlineButton>
           </div>
           <p className="text-xs text-slate-400">Free plan available · No credit card required · Cancel anytime</p>
         </div>
