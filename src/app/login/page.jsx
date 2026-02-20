@@ -502,7 +502,7 @@ export default function LoginPage() {
               >
                 Don&rsquo;t have an account?{" "}
                 <a
-                  href="#"
+                  href="/auth/signup"
                   className="font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2563eb] rounded-sm"
                   style={{ color: "#2563eb" }}
                   onMouseEnter={(e) => (e.currentTarget.style.color = "#1e3a8a")}
