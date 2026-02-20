@@ -344,10 +344,18 @@ function Navbar() {
           ))}
         </div>
 
-        <div className="hidden md:flex items-center gap-3">
-          <a href="#" className="text-sm text-slate-600 hover:text-[#1e3a8a] transition-colors duration-150">Log in</a>
-          <PrimaryButton>Enter Dashboard →</PrimaryButton>
-        </div>
+       <div className="hidden md:flex items-center gap-3">
+  <Link
+    href="/login"
+    className="text-sm text-slate-600 hover:text-[#1e3a8a] transition-colors duration-150"
+  >
+    Log in
+  </Link>
+
+  <PrimaryButton href="/login">
+    Create Account →
+  </PrimaryButton>
+</div>
 
         <button className="md:hidden p-2 text-slate-600" onClick={() => setOpen(!open)} aria-label="Toggle menu">
           {open ? '✕' : '☰'}
@@ -358,7 +366,7 @@ function Navbar() {
           {NAV_LINKS.map((l) => (
             <a key={l.label} href={l.href} onClick={() => setOpen(false)} className="text-sm text-slate-700 hover:text-[#1e3a8a]">{l.label}</a>
           ))}
-          <PrimaryButton className="mt-1 w-full">Enter Dashboard →</PrimaryButton>
+          <PrimaryButton href="/login" className="mt-1 w-full">Create Account →</PrimaryButton>
         </div>
       )}
     </nav>
@@ -715,7 +723,7 @@ function CTA() {
           <p className="text-xs text-slate-400">Free plan available · No credit card required · Cancel anytime</p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
           {[
             {
               title: 'Free',
@@ -732,7 +740,7 @@ function CTA() {
               highlight: true,
             },
           ].map((plan) => (
-            <div key={plan.title} className={`border rounded-xl p-6 bg-white ${plan.highlight ? 'border-[#2563eb] shadow-sm' : 'border-slate-200'}`}>
+            <div key={plan.title} className={`border rounded-xl p-6 bg-white flex flex-col ${plan.highlight ? 'border-[#2563eb] shadow-sm' : 'border-slate-200'}`}>
               {plan.highlight && (
                 <span className="inline-flex mb-3 text-[11px] font-semibold text-[#2563eb] uppercase tracking-wider border border-blue-200 bg-blue-50 px-2.5 py-0.5 rounded-full">Most Popular</span>
               )}
@@ -749,7 +757,7 @@ function CTA() {
                   </div>
                 ))}
               </div>
-              <a href="#" className={`block text-center w-full py-2.5 rounded-lg text-sm font-medium transition-colors duration-150 ${plan.highlight ? 'bg-[#1e3a8a] hover:bg-[#1e40af] text-white' : 'border border-slate-200 hover:bg-slate-50 text-slate-700'}`}>
+              <a href="#" className={`mt-auto block text-center w-full py-2.5 rounded-lg text-sm font-medium transition-colors duration-150 ${plan.highlight ? 'bg-[#1e3a8a] hover:bg-[#1e40af] text-white' : 'border border-slate-200 hover:bg-slate-50 text-slate-700'}`}>
                 {plan.price === '₹0' ? 'Get Started Free' : 'Start Free Trial'}
               </a>
             </div>
