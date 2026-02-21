@@ -1,1 +1,61 @@
 @import "tailwindcss";
+
+/* Custom cursor / anti-gravity particle styles */
+
+.cursor-effect-root {
+	position: fixed;
+	inset: 0;
+	pointer-events: none;
+	z-index: 9999;
+}
+
+/* halo that follows the native cursor (doesn't hide native cursor) */
+.cursor-halo {
+	position: fixed;
+	left: 0;
+	top: 0;
+	width: 44px;
+	height: 44px;
+	margin-left: 0;
+	margin-top: 0;
+	border-radius: 50%;
+	background: radial-gradient(circle at 40% 40%, rgba(99,102,241,0.04), rgba(99,102,241,0.01));
+	box-shadow: none;
+	transform: translate3d(-9999px, -9999px, 0);
+	transition: transform 0.06s linear, transform 0.12s ease;
+	will-change: transform;
+	pointer-events: none;
+}
+
+.cursor-halo.cursor-active {
+	transform: scale(1.08) translateZ(0);
+}
+
+/* reduce motion: respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+	.cursor-halo { display: none; }
+}
+
+/* orbiting translucent blobs around halo for anti-gravity feel */
+/* dot ring */
+.cursor-dot {
+	position: fixed;
+	left: 0;
+	top: 0;
+	border-radius: 50%;
+	background: rgba(99,102,241,0.95);
+	pointer-events: none;
+	will-change: transform, opacity;
+	mix-blend-mode: normal;
+	opacity: 0;
+	transition: opacity 180ms ease, transform 120ms linear;
+}
+
+/* show dots only when moving */
+.ring-visible .cursor-dot { opacity: 1; }
+
+/* Highlight text effect */
+.highlight-wrap { position: fixed; left: 50%; top: 8vh; transform: translateX(-50%); z-index: 9000; pointer-events: none; }
+.highlight-text { font-size: 20px; font-weight: 700; color: #fff; text-align: center; text-shadow: 0 2px 12px rgba(0,0,0,0.45); background: linear-gradient(90deg,#fff,#eef2ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.text-effect-root { position: fixed; inset: 0; pointer-events: none; z-index: 8999; }
+.text-effect-dot { position: fixed; left: 0; top: 0; border-radius: 50%; background: radial-gradient(circle at 30% 30%, rgba(99,102,241,1), rgba(59,130,246,0.9)); mix-blend-mode: screen; filter: blur(4px) drop-shadow(0 0 8px rgba(99,102,241,0.6)); pointer-events: none; width: 10px; height: 10px; transform: translate3d(-9999px,-9999px,0); box-shadow: 0 0 12px rgba(99,102,241,0.8), inset -1px -1px 3px rgba(30,58,138,0.4); }
