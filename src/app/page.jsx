@@ -358,6 +358,23 @@ function DashboardPreview() {
    NAVBAR
 ───────────────────────────────────────────── */
 
+function CursorHalo() {
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const move = (e) => {
+      if (!ref.current) return;
+      ref.current.style.left = e.clientX + 'px';
+      ref.current.style.top = e.clientY + 'px';
+    };
+
+    window.addEventListener('mousemove', move);
+    return () => window.removeEventListener('mousemove', move);
+  }, []);
+
+  return <div ref={ref} className="cursor-halo" />;
+}
+
 function Navbar() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -449,33 +466,44 @@ function Navbar() {
 ───────────────────────────────────────────── */
 
 function Hero() {
+  const [showContent, setShowContent] = useState(false);
+
+  useEffect(() => {
+   const timer = setTimeout(() => setShowContent(true), 2800);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <section className="relative bg-[#f8fafc] border-b border-slate-200 overflow-hidden">
       <Reveal>
-      <div className="max-w-7xl mx-auto px-6 md:px-8 pt-6 md:pt-10 pb-20 md:pb-24">
-        <div className="grid lg:grid-cols-2 gap-16 items-center justify-items-center lg:justify-items-stretch">
-          <div className="max-w-xl mx-auto lg:mx-0 text-center lg:text-left hero-animate">
-            <Badge>Now in Public Beta</Badge>
-            <h1 className="mt-7 md:mt-8 text-4xl md:text-5xl font-semibold text-[#0f172a] leading-[1.15] tracking-tight">
-              <span className="type-line type-line-1">Clarity Over Noise.</span>
-              <br />
-              <span className="type-line type-line-2 text-[#2563eb]">Intelligence Over Impulse.</span>
-            </h1>
-            <p className="mt-4 md:mt-5 text-lg text-slate-500 leading-relaxed">
-              Rupeexo is a trust-first financial intelligence platform for disciplined, long-term investors. We surface what matters — fundamentals, risk, and structure — so every decision you make is grounded in understanding, not noise.
-            </p>
-            <p className="mt-3 text-sm text-slate-400 leading-relaxed">
-              Built for investors who read balance sheets, think in decades, and refuse to act on speculation. If that's you, you're in the right place.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3 items-center justify-center lg:justify-start">
-              <PrimaryButton href="#platform" className="px-6 py-3 text-base">Explore the Platform →</PrimaryButton>
-              <OutlineButton href="/auth/signup" className="px-6 py-3 text-base">Sign Up</OutlineButton>
+        <div className="max-w-7xl mx-auto px-6 md:px-8 pt-6 md:pt-10 pb-20 md:pb-24">
+          <div className="grid lg:grid-cols-2 gap-16 items-center justify-items-center lg:justify-items-stretch">
+            <div className="max-w-xl mx-auto lg:mx-0 text-center lg:text-left">
+              <div className="hero-animate">
+                <Badge>Now in Public Beta</Badge>
+                <h1 className="mt-7 md:mt-8 text-4xl md:text-5xl font-semibold text-[#0f172a] leading-[1.15] tracking-tight">
+                  <span className="type-line type-line-1">Clarity Over Noise.</span>
+                  <br />
+                  <span className="type-line type-line-2 text-[#2563eb]">Intelligence Over Impulse.</span>
+                </h1>
+              </div>
+              <div className={`after-typing ${showContent ? 'after-typing-show' : ''}`}>
+                <p className="mt-4 md:mt-5 text-lg text-slate-500 leading-relaxed">
+                  Rupeexo is a trust-first financial intelligence platform for disciplined, long-term investors. We surface what matters — fundamentals, risk, and structure — so every decision you make is grounded in understanding, not noise.
+                </p>
+                <p className="mt-3 text-sm text-slate-400 leading-relaxed">
+                  Built for investors who read balance sheets, think in decades, and refuse to act on speculation. If that's you, you're in the right place.
+                </p>
+                <div className="mt-8 flex flex-wrap gap-3 items-center justify-center lg:justify-start">
+                  <PrimaryButton href="#platform" className="px-6 py-3 text-base">Explore the Platform →</PrimaryButton>
+                  <OutlineButton href="/auth/signup" className="px-6 py-3 text-base">Sign Up</OutlineButton>
+                </div>
+                <p className="mt-5 text-xs text-slate-400">No noise. No hype. No unsolicited recommendations. Ever.</p>
+              </div>
             </div>
-            <p className="mt-5 text-xs text-slate-400">No noise. No hype. No unsolicited recommendations. Ever.</p>
+            <DashboardPreview />
           </div>
-          <DashboardPreview />
         </div>
-      </div>
       </Reveal>
     </section>
   );
@@ -504,7 +532,7 @@ function TrustStrip() {
 
 function FeatureCard({ title, description, icon }) {
   return (
-    <div className="card-hover group border border-slate-200 rounded-xl bg-white p-6 cursor-default">
+    <div className="card-hover card-spotlight card-gradient glass-hover group border border-slate-200 rounded-xl bg-white p-6 cursor-default">
       <div className="w-9 h-9 rounded-lg border border-slate-100 bg-slate-50 flex items-center justify-center text-[#1e3a8a] text-base mb-4">{icon}</div>
       <h3 className="text-base font-semibold text-[#0f172a] mb-2">{title}</h3>
       <p className="text-sm text-slate-500 leading-relaxed">{description}</p>
@@ -539,7 +567,7 @@ function Features() {
 
 function IntegrityCard({ title, description }) {
   return (
-   <div className="card-hover group border border-slate-200 rounded-xl bg-white p-6 cursor-default">
+   <div className="card-hover card-spotlight card-gradient glass-hover group border border-slate-200 rounded-xl bg-white p-6 cursor-default">
       <h3 className="text-base font-semibold text-[#0f172a] mb-2">{title}</h3>
       <p className="text-sm text-slate-500 leading-relaxed">{description}</p>
     </div>
@@ -829,7 +857,7 @@ function CTA() {
             ].map((plan) => (
               <div
                 key={plan.title}
-                className={`card-hover border rounded-xl p-6 bg-white flex flex-col shadow-sm ${plan.highlight ? 'border-[#2563eb]' : 'border-slate-200'}`}
+                className={`card-hover card-spotlight card-gradient glass-hover border rounded-xl p-6 bg-white flex flex-col shadow-sm ${plan.highlight ? 'border-[#2563eb]' : 'border-slate-200'}`}
               >
                 {plan.highlight && (
                   <span className="inline-flex mb-3 text-[11px] font-semibold text-[#2563eb] uppercase tracking-wider border border-blue-200 bg-blue-50 px-2.5 py-0.5 rounded-full">Most Popular</span>
@@ -977,39 +1005,96 @@ export default function Page() {
     0 12px 30px rgba(37, 99, 235, 0.12),
     0 0 0 1px rgba(37, 99, 235, 0.18);
 }
-/* Typing animation (no blinking cursor after finish) */
+
+/* Animated gradient border */
+.card-gradient {
+  position: relative;
+  border: 1px solid transparent;
+  background:
+    linear-gradient(white, white) padding-box,
+    linear-gradient(120deg, #2563eb, #60a5fa, #a78bfa) border-box;
+  background-size: 200% 200%;
+  transition: background-position 400ms ease, transform 180ms ease;
+}
+.card-gradient:hover { background-position: 100% 0; }
+
+/* Glass hover */
+.glass-hover {
+  backdrop-filter: blur(8px);
+  transition: backdrop-filter 180ms ease, background 180ms ease;
+}
+.glass-hover:hover {
+  backdrop-filter: blur(12px);
+  background: rgba(255,255,255,0.85);
+}
+
+/* Global cursor halo (smaller + lighter) */
+.cursor-halo {
+  position: fixed;
+  width: 360px;
+  height: 360px;
+  pointer-events: none;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(37,99,235,0.06) 0%, rgba(37,99,235,0.035) 30%, rgba(37,99,235,0.02) 55%, transparent 70%);
+  filter: blur(16px);
+  transform: translate(-50%, -50%);
+  z-index: 0;
+  transition: opacity 0.25s ease;
+}
+/* Typing animation without layout shift (clip-path based) */
 
 .type-line {
   display: inline-block;
-  overflow: hidden;
   white-space: nowrap;
-  border-right: none !important; /* ensure no cursor line */
+  overflow: hidden;
+  border-right: none !important;
+  /* hide text before animation starts */
+  clip-path: inset(0 100% 0 0);
 }
+
 .type-line::after {
   content: none !important;
 }
 
 .type-line-1 {
-  width: 0;
-  animation: typing1 1.6s steps(22, end) 0.2s forwards;
+  animation: reveal1 1.2s steps(22, end) 0.1s both;
 }
 
 .type-line-2 {
-  width: 0;
-  animation: typing2 1.8s steps(26, end) 1.9s forwards;
+  animation: reveal2 1.3s steps(26, end) 1.3s both;
 }
 
-@keyframes typing1 {
-  from { width: 0 }
-  to { width: 22ch }
+@keyframes reveal1 {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
 }
 
-@keyframes typing2 {
-  from { width: 0 }
-  to { width: 26ch }
+@keyframes reveal2 {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+
+/* Prevent hero stagger animation from revealing content early */
+.hero-animate .after-typing {
+  opacity: 0 !important;
+  transform: translateY(10px) !important;
+  animation: none !important;
+}
+  
+/* Content appears after typing */
+.after-typing {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 500ms ease, transform 500ms ease;
+}
+
+.after-typing-show {
+  opacity: 1;
+  transform: translateY(0);
 }
 `}</style>
       <div className="font-sans antialiased text-[#0f172a] bg-[#f8fafc] transition-all duration-150">
+        <CursorHalo />
         <Navbar />
         <main>
           <Hero />
