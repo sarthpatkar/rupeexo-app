@@ -3,7 +3,6 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import * as THREE from 'three';
 
 function Reveal({ children, className = '' }) {
   const ref = useRef(null);
@@ -37,168 +36,6 @@ function Reveal({ children, className = '' }) {
   );
 }
 
-// ─────────────────────────────────────────────
-// HERO BACKGROUND DOTS COMPONENT (Grid Displacement Field)
-// ─────────────────────────────────────────────
-function HeroBackground() {
-  const mountRef = useRef(null);
-
-  useEffect(() => {
-    const container = mountRef.current;
-    if (!container) return;
-
-    const width = container.clientWidth;
-    const height = container.clientHeight;
-
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(60, width / height, 1, 1000);
-    camera.position.z = 300;
-
-    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-    renderer.setSize(width, height);
-    renderer.setPixelRatio(window.devicePixelRatio || 1);
-    container.appendChild(renderer.domElement);
-
-    const COUNT = 220;
-
-    const positions = new Float32Array(COUNT * 3);
-    const base = new Float32Array(COUNT * 3);
-    const sizes = new Float32Array(COUNT);
-    const colors = new Float32Array(COUNT * 3);
-
-    const palette = [
-      new THREE.Color('#2563eb'),
-      new THREE.Color('#60a5fa'),
-      new THREE.Color('#22c55e'),
-      new THREE.Color('#a78bfa'),
-      new THREE.Color('#f59e0b')
-    ];
-
-    for (let i = 0; i < COUNT; i++) {
-      const x = (Math.random() - 0.5) * width;
-      const y = (Math.random() - 0.5) * height;
-      const z = (Math.random() - 0.5) * 200; // depth
-
-      positions[i * 3] = x;
-      positions[i * 3 + 1] = y;
-      positions[i * 3 + 2] = z;
-
-      base[i * 3] = x;
-      base[i * 3 + 1] = y;
-      base[i * 3 + 2] = z;
-
-      sizes[i] = 2 + Math.random() * 2;
-
-      const c = palette[Math.floor(Math.random() * palette.length)];
-      colors[i * 3] = c.r;
-      colors[i * 3 + 1] = c.g;
-      colors[i * 3 + 2] = c.b;
-    }
-
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-    geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
-
-    const material = new THREE.PointsMaterial({
-      size: 3,
-      vertexColors: true,
-      transparent: true,
-      opacity: 0.9,
-      depthWrite: false
-    });
-
-    const points = new THREE.Points(geometry, material);
-    scene.add(points);
-
-    let mouse = new THREE.Vector2(9999, 9999);
-
-    function onMove(e) {
-      const rect = renderer.domElement.getBoundingClientRect();
-      mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-      mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-    }
-
-    window.addEventListener('mousemove', onMove);
-
-    const raycaster = new THREE.Raycaster();
-    raycaster.params.Points.threshold = 20;
-
-    function animate() {
-      const pos = geometry.attributes.position.array;
-
-      for (let i = 0; i < COUNT; i++) {
-        const ix = i * 3;
-
-        const bx = base[ix];
-        const by = base[ix + 1];
-        const bz = base[ix + 2];
-
-        let x = pos[ix];
-        let y = pos[ix + 1];
-        let z = pos[ix + 2];
-
-        // project mouse into scene plane
-        raycaster.setFromCamera(mouse, camera);
-        const planeZ = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
-        const target = new THREE.Vector3();
-        raycaster.ray.intersectPlane(planeZ, target);
-
-        const dx = x - target.x;
-        const dy = y - target.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-
-        const radius = 120;
-
-        if (dist < radius) {
-          const force = (1 - dist / radius) * 20;
-          x += (dx / dist) * force;
-          y += (dy / dist) * force;
-          z += force * 0.6; // depth pop
-        }
-
-        // spring back to base
-        x += (bx - x) * 0.08;
-        y += (by - y) * 0.08;
-        z += (bz - z) * 0.08;
-
-        pos[ix] = x;
-        pos[ix + 1] = y;
-        pos[ix + 2] = z;
-      }
-
-      geometry.attributes.position.needsUpdate = true;
-
-      renderer.render(scene, camera);
-      requestAnimationFrame(animate);
-    }
-
-    animate();
-
-    function onResize() {
-      const w = container.clientWidth;
-      const h = container.clientHeight;
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
-    }
-
-    window.addEventListener('resize', onResize);
-
-    return () => {
-      window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('resize', onResize);
-      container.removeChild(renderer.domElement);
-    };
-  }, []);
-
-  return (
-    <div
-      ref={mountRef}
-      className="pointer-events-none absolute inset-0 z-0 w-full h-full"
-    />
-  );
-}
 
 /* ─────────────────────────────────────────────
    DATA
@@ -553,10 +390,10 @@ function Navbar() {
     <nav className={`sticky top-0 z-50 bg-white/80 backdrop-blur border-b border-slate-200 transition-shadow duration-200 ${scrolled ? 'shadow-sm' : ''}`}>
       <div className="max-w-7xl mx-auto px-6 md:px-8 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 select-none">
-          <div className="w-6 h-6 rounded bg-[#1e3a8a] flex items-center justify-center">
-            <span className="text-white text-xs font-bold">R</span>
+          <div className="w-7 h-7 rounded bg-[#1e3a8a] flex items-center justify-center">
+            <span className="text-white text-sm font-bold">R</span>
           </div>
-          <span className="text-[#0f172a] font-semibold text-base tracking-tight">Rupeexo</span>
+          <span className="text-[#0f172a] font-semibold text-lg md:text-xl tracking-tight">Rupeexo</span>
         </Link>
 
         <div className="hidden md:flex items-center gap-8">
@@ -614,7 +451,6 @@ function Navbar() {
 function Hero() {
   return (
     <section className="relative bg-[#f8fafc] border-b border-slate-200 overflow-hidden">
-      <HeroBackground />
       <Reveal>
       <div className="max-w-7xl mx-auto px-6 md:px-8 pt-6 md:pt-10 pb-20 md:pb-24">
         <div className="grid lg:grid-cols-2 gap-16 items-center justify-items-center lg:justify-items-stretch">
@@ -652,22 +488,23 @@ function Hero() {
 function TrustStrip() {
   return (
     <section className="bg-white border-b border-slate-200">
-      <div className="max-w-7xl mx-auto px-6 md:px-8 py-12">
-        <p className="text-sm text-slate-500 text-center max-w-2xl mx-auto">
-          Built for individual investors who prefer structured analysis over noise. Rupeexo focuses on clarity, fundamentals, and disciplined decision-making — without social signals or hype.
-        </p>
-      </div>
+      <Reveal>
+        <div className="section-animate max-w-7xl mx-auto px-6 md:px-8 py-12">
+          <p className="text-sm text-slate-500 text-center max-w-2xl mx-auto">
+            Built for individual investors who prefer structured analysis over noise. Rupeexo focuses on clarity, fundamentals, and disciplined decision-making — without social signals or hype.
+          </p>
+        </div>
+      </Reveal>
     </section>
   );
 }
-
 /* ─────────────────────────────────────────────
    FEATURES
 ───────────────────────────────────────────── */
 
 function FeatureCard({ title, description, icon }) {
   return (
-    <div className="group border border-slate-200 rounded-xl bg-white p-6 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md transition-all duration-200 cursor-default">
+    <div className="card-hover group border border-slate-200 rounded-xl bg-white p-6 cursor-default">
       <div className="w-9 h-9 rounded-lg border border-slate-100 bg-slate-50 flex items-center justify-center text-[#1e3a8a] text-base mb-4">{icon}</div>
       <h3 className="text-base font-semibold text-[#0f172a] mb-2">{title}</h3>
       <p className="text-sm text-slate-500 leading-relaxed">{description}</p>
@@ -679,18 +516,18 @@ function Features() {
   return (
     <section id="features" className="bg-[#f8fafc] border-b border-slate-200">
       <Reveal>
-      <div className="max-w-7xl mx-auto px-6 md:px-8 py-20 md:py-28">
-        <div className="max-w-2xl mb-14">
-          <SectionLabel>Platform Capabilities</SectionLabel>
-          <h2 className="text-2xl md:text-[30px] font-semibold tracking-tight text-[#0f172a] mb-4">Everything you need to invest with intention.</h2>
-          <p className="text-[15px] md:text-base text-slate-500 leading-relaxed">
-            Rupeexo is not a trading tool. It's a thinking tool. Every feature is designed to help you understand your portfolio more deeply and act on analysis, not anxiety.
-          </p>
+        <div className="section-animate max-w-7xl mx-auto px-6 md:px-8 py-20 md:py-28">
+          <div className="max-w-2xl mb-14">
+            <SectionLabel>Platform Capabilities</SectionLabel>
+            <h2 className="text-2xl md:text-[30px] font-semibold tracking-tight text-[#0f172a] mb-4">Everything you need to invest with intention.</h2>
+            <p className="text-[15px] md:text-base text-slate-500 leading-relaxed">
+              Rupeexo is not a trading tool. It's a thinking tool. Every feature is designed to help you understand your portfolio more deeply and act on analysis, not anxiety.
+            </p>
+          </div>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {FEATURES.map((f) => <FeatureCard key={f.title} {...f} />)}
+          </div>
         </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {FEATURES.map((f) => <FeatureCard key={f.title} {...f} />)}
-        </div>
-      </div>
       </Reveal>
     </section>
   );
@@ -702,7 +539,7 @@ function Features() {
 
 function IntegrityCard({ title, description }) {
   return (
-    <div className="group border border-slate-200 rounded-xl bg-white p-6 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md transition-all duration-200 cursor-default">
+   <div className="card-hover group border border-slate-200 rounded-xl bg-white p-6 cursor-default">
       <h3 className="text-base font-semibold text-[#0f172a] mb-2">{title}</h3>
       <p className="text-sm text-slate-500 leading-relaxed">{description}</p>
     </div>
@@ -713,32 +550,32 @@ function PlatformIntegrity() {
   return (
     <section id="integrity" className="bg-white border-b border-slate-200">
       <Reveal>
-      <div className="max-w-7xl mx-auto px-6 md:px-8 py-20 md:py-28">
-        <div className="max-w-2xl mb-14">
-          <SectionLabel>Platform Integrity</SectionLabel>
-          <h2 className="text-2xl md:text-[30px] font-semibold tracking-tight text-[#0f172a] mb-4">
-            Financial data you can trust.
-          </h2>
-          <p className="text-[15px] md:text-base text-slate-500 leading-relaxed">
-            Rupeexo is built on a single principle: accuracy without agenda. Every number we display is sourced from verified regulatory filings and official exchange data. We do not offer investment advice, generate buy or sell signals, or make recommendations of any kind. Our role is to surface factual, structured financial intelligence — transparently, consistently, and without bias — so that your decisions remain entirely your own.
-          </p>
-        </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {INTEGRITY_CARDS.map((card) => (
-            <IntegrityCard key={card.title} title={card.title} description={card.description} />
-          ))}
-        </div>
-        <div className="mt-10 border border-slate-100 rounded-xl bg-slate-50 px-6 py-5 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-8">
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="w-8 h-8 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 text-sm">✓</div>
-            <p className="text-sm font-semibold text-slate-700">No investment advice. Ever.</p>
+        <div className="section-animate max-w-7xl mx-auto px-6 md:px-8 py-20 md:py-28">
+          <div className="max-w-2xl mb-14">
+            <SectionLabel>Platform Integrity</SectionLabel>
+            <h2 className="text-2xl md:text-[30px] font-semibold tracking-tight text-[#0f172a] mb-4">
+              Financial data you can trust.
+            </h2>
+            <p className="text-[15px] md:text-base text-slate-500 leading-relaxed">
+              Rupeexo is built on a single principle: accuracy without agenda. Every number we display is sourced from verified regulatory filings and official exchange data. We do not offer investment advice, generate buy or sell signals, or make recommendations of any kind. Our role is to surface factual, structured financial intelligence — transparently, consistently, and without bias — so that your decisions remain entirely your own.
+            </p>
           </div>
-          <div className="h-px sm:h-8 sm:w-px bg-slate-200 shrink-0" />
-          <p className="text-[15px] md:text-base text-slate-500 leading-relaxed">
-            Rupeexo is a financial information and analytics platform. We are not a SEBI-registered investment adviser, research analyst, or broker. We do not provide investment advice, recommendations, or buy/sell signals of any kind. All data, analytics, and AI-generated interpretations are provided strictly for informational and educational purposes. Users are solely responsible for their investment decisions. Please consult a SEBI-registered financial adviser before making any investment decisions.
-          </p>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {INTEGRITY_CARDS.map((card) => (
+              <IntegrityCard key={card.title} title={card.title} description={card.description} />
+            ))}
+          </div>
+          <div className="mt-10 border border-slate-100 rounded-xl bg-slate-50 px-6 py-5 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-8">
+            <div className="flex items-center gap-3 shrink-0">
+              <div className="w-8 h-8 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 text-sm">✓</div>
+              <p className="text-sm font-semibold text-slate-700">No investment advice. Ever.</p>
+            </div>
+            <div className="h-px sm:h-8 sm:w-px bg-slate-200 shrink-0" />
+            <p className="text-[15px] md:text-base text-slate-500 leading-relaxed">
+              Rupeexo is a financial information and analytics platform. We are not a SEBI-registered investment adviser, research analyst, or broker. We do not provide investment advice, recommendations, or buy/sell signals of any kind. All data, analytics, and AI-generated interpretations are provided strictly for informational and educational purposes. Users are solely responsible for their investment decisions. Please consult a SEBI-registered financial adviser before making any investment decisions.
+            </p>
+          </div>
         </div>
-      </div>
       </Reveal>
     </section>
   );
@@ -752,31 +589,31 @@ function HowItWorks() {
   return (
     <section id="how-it-works" className="bg-[#f8fafc] border-b border-slate-200">
       <Reveal>
-      <div className="max-w-7xl mx-auto px-6 md:px-8 py-20 md:py-28">
-        <div className="max-w-xl mb-14">
-          <SectionLabel>The Process</SectionLabel>
-          <h2 className="text-2xl md:text-[30px] font-semibold tracking-tight text-[#0f172a] mb-4">From data to disciplined action.</h2>
-          <p className="text-[15px] md:text-base text-slate-500 leading-relaxed">
-            Most platforms give you data and leave you to figure out the rest. Rupeexo structures your analysis into a repeatable process — so good investing becomes a habit.
-          </p>
-        </div>
-        <div className="relative grid md:grid-cols-3 gap-10 md:gap-8">
-          <div className="hidden md:block absolute top-7 left-[22%] right-[22%] h-px bg-slate-200" />
-          {STEPS.map((step, i) => (
-            <div key={step.number} className="relative">
-              <div className="flex items-center gap-4 mb-5">
-                <div className="relative z-10 w-14 h-14 rounded-full border-2 border-slate-200 bg-white flex flex-col items-center justify-center shrink-0">
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider">Step</span>
-                  <span className="text-sm font-semibold text-[#1e3a8a]">{step.number}</span>
+        <div className="section-animate max-w-7xl mx-auto px-6 md:px-8 py-20 md:py-28">
+          <div className="max-w-xl mb-14">
+            <SectionLabel>The Process</SectionLabel>
+            <h2 className="text-2xl md:text-[30px] font-semibold tracking-tight text-[#0f172a] mb-4">From data to disciplined action.</h2>
+            <p className="text-[15px] md:text-base text-slate-500 leading-relaxed">
+              Most platforms give you data and leave you to figure out the rest. Rupeexo structures your analysis into a repeatable process — so good investing becomes a habit.
+            </p>
+          </div>
+          <div className="relative grid md:grid-cols-3 gap-10 md:gap-8">
+            <div className="hidden md:block absolute top-7 left-[22%] right-[22%] h-px bg-slate-200" />
+            {STEPS.map((step, i) => (
+              <div key={step.number} className="relative">
+                <div className="flex items-center gap-4 mb-5">
+                  <div className="relative z-10 w-14 h-14 rounded-full border-2 border-slate-200 bg-white flex flex-col items-center justify-center shrink-0">
+                    <span className="text-[10px] text-slate-400 uppercase tracking-wider">Step</span>
+                    <span className="text-sm font-semibold text-[#1e3a8a]">{step.number}</span>
+                  </div>
+                  {i < STEPS.length - 1 && <div className="md:hidden flex-1 h-px bg-slate-200" />}
                 </div>
-                {i < STEPS.length - 1 && <div className="md:hidden flex-1 h-px bg-slate-200" />}
+                <h3 className="text-lg font-semibold text-[#0f172a] mb-2">{step.title}</h3>
+                <p className="text-[15px] md:text-base text-slate-500 leading-relaxed">{step.description}</p>
               </div>
-              <h3 className="text-lg font-semibold text-[#0f172a] mb-2">{step.title}</h3>
-              <p className="text-[15px] md:text-base text-slate-500 leading-relaxed">{step.description}</p>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
       </Reveal>
     </section>
   );
@@ -790,128 +627,128 @@ function PlatformPreview() {
   return (
     <section id="platform" className="bg-[#f8fafc] border-b border-slate-200">
       <Reveal>
-      <div className="max-w-7xl mx-auto px-6 md:px-8 py-20 md:py-28">
-        <div className="text-center max-w-2xl mx-auto mb-14">
-          <SectionLabel>Platform Preview</SectionLabel>
-          <h2 className="text-2xl md:text-[30px] font-semibold tracking-tight text-[#0f172a] mb-4">What structured financial intelligence looks like.</h2>
-          <p className="text-[15px] md:text-base text-slate-500">No jargon panels. No flashing tickers. Just clean, structured information laid out for a thinking investor.</p>
-        </div>
-
-        <div className="border border-slate-200 rounded-2xl bg-white overflow-hidden shadow-[0_8px_30px_rgba(15,23,42,0.06)]">
-          {/* chrome */}
-          <div className="border-b border-slate-100 bg-slate-50 px-5 py-3 flex items-center gap-3">
-            <div className="flex gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
-              <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-              <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
-            </div>
-            <div className="flex-1 mx-4">
-              <div className="bg-white border border-slate-200 rounded-md px-3 py-1 text-xs text-slate-400 w-56">app.rupeexo.com/portfolio</div>
-            </div>
+        <div className="section-animate max-w-7xl mx-auto px-6 md:px-8 py-20 md:py-28">
+          <div className="text-center max-w-2xl mx-auto mb-14">
+            <SectionLabel>Platform Preview</SectionLabel>
+            <h2 className="text-2xl md:text-[30px] font-semibold tracking-tight text-[#0f172a] mb-4">What structured financial intelligence looks like.</h2>
+            <p className="text-[15px] md:text-base text-slate-500">No jargon panels. No flashing tickers. Just clean, structured information laid out for a thinking investor.</p>
           </div>
 
-          <div className="grid lg:grid-cols-[220px_1fr] min-h-[480px]">
-            {/* sidebar */}
-            <div className="border-r border-slate-100 bg-slate-50 p-4 hidden lg:block">
-              <div className="space-y-0.5">
-                {['Overview','Holdings','Fundamentals','Risk Monitor','AI Summaries','Watchlist'].map((item, i) => (
-                  <div key={item} className={`px-3 py-2 rounded-md text-sm cursor-default ${i === 0 ? 'bg-white border border-slate-200 text-[#1e3a8a] font-medium shadow-sm' : 'text-slate-500 hover:bg-white'}`}>
-                    {item}
-                  </div>
-                ))}
+          <div className="border border-slate-200 rounded-2xl bg-white overflow-hidden shadow-[0_8px_30px_rgba(15,23,42,0.06)]">
+            {/* chrome */}
+            <div className="border-b border-slate-100 bg-slate-50 px-5 py-3 flex items-center gap-3">
+              <div className="flex gap-1.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
+                <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+                <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
               </div>
-              <div className="mt-6 border-t border-slate-200 pt-4">
-                <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-3">Watchlist</p>
-                {['BAJFINANCE','PIDILITIND','DMART','ASIANPAINT'].map((t) => (
-                  <div key={t} className="flex items-center justify-between py-1.5 text-xs text-slate-600">
-                    <span>{t}</span>
-                    <span className="text-emerald-600 text-[11px]">▲</span>
-                  </div>
-                ))}
+              <div className="flex-1 mx-4">
+                <div className="bg-white border border-slate-200 rounded-md px-3 py-1 text-xs text-slate-400 w-56">app.rupeexo.com/portfolio</div>
               </div>
             </div>
 
-            {/* main */}
-            <div className="p-6 space-y-6">
-              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {[
-                  { label: 'Net Worth Tracked', value: '₹18.4L', sub: '+₹56K this month' },
-                  { label: 'Portfolio XIRR', value: '14.8%', sub: 'vs 12.1% Nifty 50' },
-                  { label: 'Risk Score', value: '62/100', sub: 'Moderate — stable' },
-                  { label: 'Last Analysed', value: '4 min ago', sub: 'Auto-synced daily' },
-                ].map((m) => (
-                  <div key={m.label} className="border border-slate-100 rounded-xl p-4 bg-slate-50">
-                    <p className="text-[11px] text-slate-400 uppercase tracking-wider mb-1.5">{m.label}</p>
-                    <p className="text-lg font-semibold text-[#0f172a]">{m.value}</p>
-                    <p className="text-xs text-slate-400 mt-0.5">{m.sub}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="grid lg:grid-cols-5 gap-4">
-                {/* fundamentals table */}
-                <div className="lg:col-span-3 border border-slate-100 rounded-xl overflow-hidden">
-                  <div className="border-b border-slate-100 bg-slate-50 px-4 py-2.5 flex items-center justify-between">
-                    <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Fundamental Snapshot</p>
-                    <span className="text-[10px] text-slate-400">NSE · FY24</span>
-                  </div>
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-slate-50">
-                        {['Company','P/E','ROE','D/E'].map((h, i) => (
-                          <th key={h} className={`text-[11px] text-slate-400 font-medium py-2 uppercase tracking-wider ${i === 0 ? 'text-left px-4' : 'text-right px-3'}`}>{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {[
-                        { name: 'HDFC Bank', pe: '19.2x', roe: '16.8%', de: '0.8' },
-                        { name: 'Infosys', pe: '24.1x', roe: '31.2%', de: '0.0' },
-                        { name: 'Reliance', pe: '27.3x', roe: '9.4%', de: '0.5' },
-                        { name: 'TCS', pe: '28.6x', roe: '46.1%', de: '0.0' },
-                      ].map((row) => (
-                        <tr key={row.name} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
-                          <td className="px-4 py-2.5 text-sm text-slate-700 font-medium">{row.name}</td>
-                          <td className="px-3 py-2.5 text-sm text-slate-600 text-right">{row.pe}</td>
-                          <td className="px-3 py-2.5 text-sm text-emerald-600 text-right font-medium">{row.roe}</td>
-                          <td className="px-4 py-2.5 text-sm text-slate-600 text-right">{row.de}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* risk panel */}
-                <div className="lg:col-span-2 border border-slate-100 rounded-xl p-4 space-y-4">
-                  <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Risk Indicators</p>
-                  {[
-                    { label: 'Concentration Risk', level: 'Medium', pct: 62, color: 'bg-amber-400' },
-                    { label: 'Sector Overlap', level: 'Low', pct: 28, color: 'bg-emerald-400' },
-                    { label: 'Leverage Exposure', level: 'Low', pct: 22, color: 'bg-emerald-400' },
-                    { label: 'Valuation Risk', level: 'High', pct: 78, color: 'bg-red-400' },
-                  ].map((r) => (
-                    <div key={r.label}>
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-xs text-slate-600">{r.label}</span>
-                        <span className="text-[11px] text-slate-400">{r.level}</span>
-                      </div>
-                      <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                        <div className={`h-full rounded-full ${r.color}`} style={{ width: `${r.pct}%` }} />
-                      </div>
+            <div className="grid lg:grid-cols-[220px_1fr] min-h-[480px]">
+              {/* sidebar */}
+              <div className="border-r border-slate-100 bg-slate-50 p-4 hidden lg:block">
+                <div className="space-y-0.5">
+                  {['Overview','Holdings','Fundamentals','Risk Monitor','AI Summaries','Watchlist'].map((item, i) => (
+                    <div key={item} className={`px-3 py-2 rounded-md text-sm cursor-default ${i === 0 ? 'bg-white border border-slate-200 text-[#1e3a8a] font-medium shadow-sm' : 'text-slate-500 hover:bg-white'}`}>
+                      {item}
                     </div>
                   ))}
-                  <div className="border-t border-slate-100 pt-3">
-                    <p className="text-[11px] text-[#2563eb] font-medium uppercase tracking-wider mb-1.5">Insight</p>
-                    <p className="text-xs text-slate-500 leading-relaxed">
-                      Valuation risk is elevated. Consider averaging into defensive positions before Q4 earnings cycle.
-                    </p>
+                </div>
+                <div className="mt-6 border-t border-slate-200 pt-4">
+                  <p className="text-[10px] text-slate-400 uppercase tracking-widest mb-3">Watchlist</p>
+                  {['BAJFINANCE','PIDILITIND','DMART','ASIANPAINT'].map((t) => (
+                    <div key={t} className="flex items-center justify-between py-1.5 text-xs text-slate-600">
+                      <span>{t}</span>
+                      <span className="text-emerald-600 text-[11px]">▲</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* main */}
+              <div className="p-6 space-y-6">
+                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {[
+                    { label: 'Net Worth Tracked', value: '₹18.4L', sub: '+₹56K this month' },
+                    { label: 'Portfolio XIRR', value: '14.8%', sub: 'vs 12.1% Nifty 50' },
+                    { label: 'Risk Score', value: '62/100', sub: 'Moderate — stable' },
+                    { label: 'Last Analysed', value: '4 min ago', sub: 'Auto-synced daily' },
+                  ].map((m) => (
+                    <div key={m.label} className="border border-slate-100 rounded-xl p-4 bg-slate-50">
+                      <p className="text-[11px] text-slate-400 uppercase tracking-wider mb-1.5">{m.label}</p>
+                      <p className="text-lg font-semibold text-[#0f172a]">{m.value}</p>
+                      <p className="text-xs text-slate-400 mt-0.5">{m.sub}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="grid lg:grid-cols-5 gap-4">
+                  {/* fundamentals table */}
+                  <div className="lg:col-span-3 border border-slate-100 rounded-xl overflow-hidden">
+                    <div className="border-b border-slate-100 bg-slate-50 px-4 py-2.5 flex items-center justify-between">
+                      <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Fundamental Snapshot</p>
+                      <span className="text-[10px] text-slate-400">NSE · FY24</span>
+                    </div>
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-slate-50">
+                          {['Company','P/E','ROE','D/E'].map((h, i) => (
+                            <th key={h} className={`text-[11px] text-slate-400 font-medium py-2 uppercase tracking-wider ${i === 0 ? 'text-left px-4' : 'text-right px-3'}`}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {[
+                          { name: 'HDFC Bank', pe: '19.2x', roe: '16.8%', de: '0.8' },
+                          { name: 'Infosys', pe: '24.1x', roe: '31.2%', de: '0.0' },
+                          { name: 'Reliance', pe: '27.3x', roe: '9.4%', de: '0.5' },
+                          { name: 'TCS', pe: '28.6x', roe: '46.1%', de: '0.0' },
+                        ].map((row) => (
+                          <tr key={row.name} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                            <td className="px-4 py-2.5 text-sm text-slate-700 font-medium">{row.name}</td>
+                            <td className="px-3 py-2.5 text-sm text-slate-600 text-right">{row.pe}</td>
+                            <td className="px-3 py-2.5 text-sm text-emerald-600 text-right font-medium">{row.roe}</td>
+                            <td className="px-4 py-2.5 text-sm text-slate-600 text-right">{row.de}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* risk panel */}
+                  <div className="lg:col-span-2 border border-slate-100 rounded-xl p-4 space-y-4">
+                    <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Risk Indicators</p>
+                    {[
+                      { label: 'Concentration Risk', level: 'Medium', pct: 62, color: 'bg-amber-400' },
+                      { label: 'Sector Overlap', level: 'Low', pct: 28, color: 'bg-emerald-400' },
+                      { label: 'Leverage Exposure', level: 'Low', pct: 22, color: 'bg-emerald-400' },
+                      { label: 'Valuation Risk', level: 'High', pct: 78, color: 'bg-red-400' },
+                    ].map((r) => (
+                      <div key={r.label}>
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-xs text-slate-600">{r.label}</span>
+                          <span className="text-[11px] text-slate-400">{r.level}</span>
+                        </div>
+                        <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                          <div className={`h-full rounded-full ${r.color}`} style={{ width: `${r.pct}%` }} />
+                        </div>
+                      </div>
+                    ))}
+                    <div className="border-t border-slate-100 pt-3">
+                      <p className="text-[11px] text-[#2563eb] font-medium uppercase tracking-wider mb-1.5">Insight</p>
+                      <p className="text-xs text-slate-500 leading-relaxed">
+                        Valuation risk is elevated. Consider averaging into defensive positions before Q4 earnings cycle.
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
       </Reveal>
     </section>
   );
@@ -925,23 +762,23 @@ function Philosophy() {
   return (
     <section id="philosophy" className="bg-white border-b border-slate-200">
       <Reveal>
-      <div className="max-w-3xl mx-auto px-6 md:px-8 py-24 md:py-32 text-center">
-        <SectionLabel>Our Belief</SectionLabel>
-        <h2 className="text-2xl md:text-[30px] font-semibold tracking-tight text-[#0f172a] mb-10 leading-snug">Built for Long-Term Discipline</h2>
-        <p className="text-[15px] md:text-base text-slate-500 leading-relaxed mb-7">
-          Most financial products are designed to keep you active — clicking, reacting, trading. Rupeexo is designed for the opposite. We believe the best investing decisions come from deep understanding, not rapid response. From structure, not stimulation.
-        </p>
-        <p className="text-[15px] md:text-base text-slate-500 leading-relaxed mb-7">
-          We will never surface trending stocks. We will never send you "buy now" alerts. We will never optimise for engagement at the cost of your clarity. Every design choice on this platform exists to help you think more carefully — and act less impulsively.
-        </p>
-        <p className="text-[15px] md:text-base text-slate-500 leading-relaxed mb-7">
-          If you believe investing is a craft that rewards patience, rigour, and intellectual honesty, Rupeexo is built for you.
-        </p>
-        <div className="mt-14 inline-flex items-center gap-3 border border-slate-200 rounded-full px-5 py-2.5">
-          <div className="w-2 h-2 rounded-full bg-emerald-400" />
-          <span className="text-sm text-slate-600">No investment advice. No bias.</span>
+        <div className="section-animate max-w-3xl mx-auto px-6 md:px-8 py-24 md:py-32 text-center">
+          <SectionLabel>Our Belief</SectionLabel>
+          <h2 className="text-2xl md:text-[30px] font-semibold tracking-tight text-[#0f172a] mb-10 leading-snug">Built for Long-Term Discipline</h2>
+          <p className="text-[15px] md:text-base text-slate-500 leading-relaxed mb-7">
+            Most financial products are designed to keep you active — clicking, reacting, trading. Rupeexo is designed for the opposite. We believe the best investing decisions come from deep understanding, not rapid response. From structure, not stimulation.
+          </p>
+          <p className="text-[15px] md:text-base text-slate-500 leading-relaxed mb-7">
+            We will never surface trending stocks. We will never send you "buy now" alerts. We will never optimise for engagement at the cost of your clarity. Every design choice on this platform exists to help you think more carefully — and act less impulsively.
+          </p>
+          <p className="text-[15px] md:text-base text-slate-500 leading-relaxed mb-7">
+            If you believe investing is a craft that rewards patience, rigour, and intellectual honesty, Rupeexo is built for you.
+          </p>
+          <div className="mt-14 inline-flex items-center gap-3 border border-slate-200 rounded-full px-5 py-2.5">
+            <div className="w-2 h-2 rounded-full bg-emerald-400" />
+            <span className="text-sm text-slate-600">No investment advice. No bias.</span>
+          </div>
         </div>
-      </div>
       </Reveal>
     </section>
   );
@@ -955,68 +792,68 @@ function CTA() {
   return (
     <section id="cta" className="bg-[#f8fafc] border-b border-slate-200">
       <Reveal>
-      <div className="max-w-7xl mx-auto px-6 md:px-8 py-20 md:py-28">
-        <div className="max-w-2xl mx-auto text-center mb-14">
-          <SectionLabel>Get Started</SectionLabel>
-          <h2 className="text-2xl md:text-4xl font-semibold tracking-tight text-[#0f172a] mb-5 leading-tight">
-            Invest with Confidence.<br />Decide with Clarity.
-          </h2>
-          <p className="text-[15px] md:text-base text-slate-500 leading-relaxed mb-8">
-            Join thousands of disciplined investors who use Rupeexo to cut through the noise and build portfolios grounded in fundamentals.
-          </p>
-          
-          <p className="text-xs text-slate-400">Free plan available · No credit card required · Cancel anytime</p>
-        </div>
-        <div className="flex items-center justify-center gap-3 mb-6">
-          <div className="w-2 h-2 rounded-full bg-emerald-400" />
-          <p className="text-xs text-slate-500">
-            No investment advice · No broker integration · Cancel anytime
-          </p>
-        </div>
-        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto mt-0">
-          {[
-            {
-              title: 'Free',
-              price: '₹0',
-              period: 'forever',
-              features: ['Up to 10 holdings', 'Basic AI summaries', 'Risk overview', 'Weekly digest'],
-              highlight: false,
-            },
-            {
-              title: 'Pro',
-              price: '₹499',
-              period: 'per month',
-              features: ['Unlimited holdings', 'Full AI summaries', 'Decision support signals', 'Long-term analytics', 'Priority support'],
-              highlight: true,
-            },
-          ].map((plan) => (
-            <div
-              key={plan.title}
-              className={`border rounded-xl p-6 bg-white flex flex-col shadow-sm hover:shadow-md transition-all duration-150 ${plan.highlight ? 'border-[#2563eb]' : 'border-slate-200'}`}
-            >
-              {plan.highlight && (
-                <span className="inline-flex mb-3 text-[11px] font-semibold text-[#2563eb] uppercase tracking-wider border border-blue-200 bg-blue-50 px-2.5 py-0.5 rounded-full">Most Popular</span>
-              )}
-              <h3 className="text-base font-semibold text-[#0f172a] mb-1">{plan.title}</h3>
-              <div className="flex items-baseline gap-1 mb-4">
-                <span className="text-2xl font-semibold text-[#0f172a]">{plan.price}</span>
-                <span className="text-sm text-slate-400">/ {plan.period}</span>
+        <div className="section-animate max-w-7xl mx-auto px-6 md:px-8 py-20 md:py-28">
+          <div className="max-w-2xl mx-auto text-center mb-14">
+            <SectionLabel>Get Started</SectionLabel>
+            <h2 className="text-2xl md:text-4xl font-semibold tracking-tight text-[#0f172a] mb-5 leading-tight">
+              Invest with Confidence.<br />Decide with Clarity.
+            </h2>
+            <p className="text-[15px] md:text-base text-slate-500 leading-relaxed mb-8">
+              Join thousands of disciplined investors who use Rupeexo to cut through the noise and build portfolios grounded in fundamentals.
+            </p>
+            
+            <p className="text-xs text-slate-400">Free plan available · No credit card required · Cancel anytime</p>
+          </div>
+          <div className="flex items-center justify-center gap-3 mb-6">
+            <div className="w-2 h-2 rounded-full bg-emerald-400" />
+            <p className="text-xs text-slate-500">
+              No investment advice · No broker integration · Cancel anytime
+            </p>
+          </div>
+          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto mt-0">
+            {[
+              {
+                title: 'Free',
+                price: '₹0',
+                period: 'forever',
+                features: ['Up to 10 holdings', 'Basic AI summaries', 'Risk overview', 'Weekly digest'],
+                highlight: false,
+              },
+              {
+                title: 'Pro',
+                price: '₹499',
+                period: 'per month',
+                features: ['Unlimited holdings', 'Full AI summaries', 'Decision support signals', 'Long-term analytics', 'Priority support'],
+                highlight: true,
+              },
+            ].map((plan) => (
+              <div
+                key={plan.title}
+                className={`card-hover border rounded-xl p-6 bg-white flex flex-col shadow-sm ${plan.highlight ? 'border-[#2563eb]' : 'border-slate-200'}`}
+              >
+                {plan.highlight && (
+                  <span className="inline-flex mb-3 text-[11px] font-semibold text-[#2563eb] uppercase tracking-wider border border-blue-200 bg-blue-50 px-2.5 py-0.5 rounded-full">Most Popular</span>
+                )}
+                <h3 className="text-base font-semibold text-[#0f172a] mb-1">{plan.title}</h3>
+                <div className="flex items-baseline gap-1 mb-4">
+                  <span className="text-2xl font-semibold text-[#0f172a]">{plan.price}</span>
+                  <span className="text-sm text-slate-400">/ {plan.period}</span>
+                </div>
+                <div className="space-y-2 mb-6">
+                  {plan.features.map((f) => (
+                    <div key={f} className="flex items-center gap-2 text-sm text-slate-600">
+                      <span className="text-emerald-500 text-xs">✓</span>
+                      {f}
+                    </div>
+                  ))}
+                </div>
+                <a href="/auth/signup" className={`mt-auto block text-center w-full py-2.5 rounded-lg text-sm font-medium transition-colors duration-150 ${plan.highlight ? 'bg-[#1e3a8a] hover:bg-[#1e40af] text-white' : 'border border-slate-200 hover:bg-slate-50 text-slate-700'}`}>
+                  {plan.price === '₹0' ? 'Get Started Free' : 'Start Free Trial'}
+                </a>
               </div>
-              <div className="space-y-2 mb-6">
-                {plan.features.map((f) => (
-                  <div key={f} className="flex items-center gap-2 text-sm text-slate-600">
-                    <span className="text-emerald-500 text-xs">✓</span>
-                    {f}
-                  </div>
-                ))}
-              </div>
-              <a href="/auth/signup" className={`mt-auto block text-center w-full py-2.5 rounded-lg text-sm font-medium transition-colors duration-150 ${plan.highlight ? 'bg-[#1e3a8a] hover:bg-[#1e40af] text-white' : 'border border-slate-200 hover:bg-slate-50 text-slate-700'}`}>
-                {plan.price === '₹0' ? 'Get Started Free' : 'Start Free Trial'}
-              </a>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
       </Reveal>
     </section>
   );
@@ -1100,7 +937,7 @@ export default function Page() {
 
 .hero-animate > * {
   opacity: 0;
-  transform: translateY(20px);
+  transform: translateY(20px) scale(0.98);
   animation: heroReveal 0.6s ease forwards;
 }
 
@@ -1111,14 +948,35 @@ export default function Page() {
 .hero-animate > *:nth-child(5) { animation-delay: 0.5s; }
 .hero-animate > *:nth-child(6) { animation-delay: 0.6s; }
 
+.section-animate > * {
+  opacity: 0;
+  transform: translateY(20px) scale(0.98);
+  animation: heroReveal 0.6s ease forwards;
+}
+
+.section-animate > *:nth-child(1) { animation-delay: 0.1s; }
+.section-animate > *:nth-child(2) { animation-delay: 0.2s; }
+.section-animate > *:nth-child(3) { animation-delay: 0.3s; }
+.section-animate > *:nth-child(4) { animation-delay: 0.4s; }
+.section-animate > *:nth-child(5) { animation-delay: 0.5s; }
+.section-animate > *:nth-child(6) { animation-delay: 0.6s; }
 @keyframes heroReveal {
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 }
+.card-hover {
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
 
-
+.card-hover:hover {
+  transform: translateY(-3px) scale(1.015);
+  border-color: rgba(37, 99, 235, 0.35);
+  box-shadow:
+    0 12px 30px rgba(37, 99, 235, 0.12),
+    0 0 0 1px rgba(37, 99, 235, 0.18);
+}
 /* Typing animation (no blinking cursor after finish) */
 
 .type-line {
