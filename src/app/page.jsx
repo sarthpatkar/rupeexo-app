@@ -1,8 +1,204 @@
 /* eslint-disable */
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import * as THREE from 'three';
+
+function Reveal({ children, className = '' }) {
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          el.classList.add('opacity-100', 'translate-y-0');
+          el.classList.remove('opacity-0', 'translate-y-6');
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.12 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div
+      ref={ref}
+      className={`opacity-0 translate-y-6 transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${className}`}
+    >
+      {children}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// HERO BACKGROUND DOTS COMPONENT (Grid Displacement Field)
+// ─────────────────────────────────────────────
+function HeroBackground() {
+  const mountRef = useRef(null);
+
+  useEffect(() => {
+    const container = mountRef.current;
+    if (!container) return;
+
+    const width = container.clientWidth;
+    const height = container.clientHeight;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, width / height, 1, 1000);
+    camera.position.z = 300;
+
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    renderer.setSize(width, height);
+    renderer.setPixelRatio(window.devicePixelRatio || 1);
+    container.appendChild(renderer.domElement);
+
+    const COUNT = 220;
+
+    const positions = new Float32Array(COUNT * 3);
+    const base = new Float32Array(COUNT * 3);
+    const sizes = new Float32Array(COUNT);
+    const colors = new Float32Array(COUNT * 3);
+
+    const palette = [
+      new THREE.Color('#2563eb'),
+      new THREE.Color('#60a5fa'),
+      new THREE.Color('#22c55e'),
+      new THREE.Color('#a78bfa'),
+      new THREE.Color('#f59e0b')
+    ];
+
+    for (let i = 0; i < COUNT; i++) {
+      const x = (Math.random() - 0.5) * width;
+      const y = (Math.random() - 0.5) * height;
+      const z = (Math.random() - 0.5) * 200; // depth
+
+      positions[i * 3] = x;
+      positions[i * 3 + 1] = y;
+      positions[i * 3 + 2] = z;
+
+      base[i * 3] = x;
+      base[i * 3 + 1] = y;
+      base[i * 3 + 2] = z;
+
+      sizes[i] = 2 + Math.random() * 2;
+
+      const c = palette[Math.floor(Math.random() * palette.length)];
+      colors[i * 3] = c.r;
+      colors[i * 3 + 1] = c.g;
+      colors[i * 3 + 2] = c.b;
+    }
+
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+
+    const material = new THREE.PointsMaterial({
+      size: 3,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.9,
+      depthWrite: false
+    });
+
+    const points = new THREE.Points(geometry, material);
+    scene.add(points);
+
+    let mouse = new THREE.Vector2(9999, 9999);
+
+    function onMove(e) {
+      const rect = renderer.domElement.getBoundingClientRect();
+      mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+    }
+
+    window.addEventListener('mousemove', onMove);
+
+    const raycaster = new THREE.Raycaster();
+    raycaster.params.Points.threshold = 20;
+
+    function animate() {
+      const pos = geometry.attributes.position.array;
+
+      for (let i = 0; i < COUNT; i++) {
+        const ix = i * 3;
+
+        const bx = base[ix];
+        const by = base[ix + 1];
+        const bz = base[ix + 2];
+
+        let x = pos[ix];
+        let y = pos[ix + 1];
+        let z = pos[ix + 2];
+
+        // project mouse into scene plane
+        raycaster.setFromCamera(mouse, camera);
+        const planeZ = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+        const target = new THREE.Vector3();
+        raycaster.ray.intersectPlane(planeZ, target);
+
+        const dx = x - target.x;
+        const dy = y - target.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        const radius = 120;
+
+        if (dist < radius) {
+          const force = (1 - dist / radius) * 20;
+          x += (dx / dist) * force;
+          y += (dy / dist) * force;
+          z += force * 0.6; // depth pop
+        }
+
+        // spring back to base
+        x += (bx - x) * 0.08;
+        y += (by - y) * 0.08;
+        z += (bz - z) * 0.08;
+
+        pos[ix] = x;
+        pos[ix + 1] = y;
+        pos[ix + 2] = z;
+      }
+
+      geometry.attributes.position.needsUpdate = true;
+
+      renderer.render(scene, camera);
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+
+    function onResize() {
+      const w = container.clientWidth;
+      const h = container.clientHeight;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    }
+
+    window.addEventListener('resize', onResize);
+
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('resize', onResize);
+      container.removeChild(renderer.domElement);
+    };
+  }, []);
+
+  return (
+    <div
+      ref={mountRef}
+      className="pointer-events-none absolute inset-0 z-0 w-full h-full"
+    />
+  );
+}
 
 /* ─────────────────────────────────────────────
    DATA
@@ -193,7 +389,7 @@ function MiniSparkline({ values, color }) {
 
 function DashboardPreview() {
   return (
-    <div className="relative w-full max-w-[520px] mx-auto lg:mx-0 lg:ml-auto">
+    <div className="relative w-full max-w-[520px] mx-auto lg:mx-0 lg:ml-auto animate-float">
       <div className="border border-slate-200 rounded-2xl bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] overflow-hidden">
         {/* chrome */}
         <div className="border-b border-slate-100 px-5 py-3.5 flex items-center justify-between bg-slate-50">
@@ -417,15 +613,17 @@ function Navbar() {
 
 function Hero() {
   return (
-    <section className="bg-[#f8fafc] border-b border-slate-200">
+    <section className="relative bg-[#f8fafc] border-b border-slate-200 overflow-hidden">
+      <HeroBackground />
+      <Reveal>
       <div className="max-w-7xl mx-auto px-6 md:px-8 pt-6 md:pt-10 pb-20 md:pb-24">
         <div className="grid lg:grid-cols-2 gap-16 items-center justify-items-center lg:justify-items-stretch">
-          <div className="max-w-xl mx-auto lg:mx-0 text-center lg:text-left">
+          <div className="max-w-xl mx-auto lg:mx-0 text-center lg:text-left hero-animate">
             <Badge>Now in Public Beta</Badge>
             <h1 className="mt-7 md:mt-8 text-4xl md:text-5xl font-semibold text-[#0f172a] leading-[1.15] tracking-tight">
-              Clarity Over Noise.
+              <span className="type-line type-line-1">Clarity Over Noise.</span>
               <br />
-              <span className="text-[#2563eb]">Intelligence Over Impulse.</span>
+              <span className="type-line type-line-2 text-[#2563eb]">Intelligence Over Impulse.</span>
             </h1>
             <p className="mt-4 md:mt-5 text-lg text-slate-500 leading-relaxed">
               Rupeexo is a trust-first financial intelligence platform for disciplined, long-term investors. We surface what matters — fundamentals, risk, and structure — so every decision you make is grounded in understanding, not noise.
@@ -442,6 +640,7 @@ function Hero() {
           <DashboardPreview />
         </div>
       </div>
+      </Reveal>
     </section>
   );
 }
@@ -479,6 +678,7 @@ function FeatureCard({ title, description, icon }) {
 function Features() {
   return (
     <section id="features" className="bg-[#f8fafc] border-b border-slate-200">
+      <Reveal>
       <div className="max-w-7xl mx-auto px-6 md:px-8 py-20 md:py-28">
         <div className="max-w-2xl mb-14">
           <SectionLabel>Platform Capabilities</SectionLabel>
@@ -491,6 +691,7 @@ function Features() {
           {FEATURES.map((f) => <FeatureCard key={f.title} {...f} />)}
         </div>
       </div>
+      </Reveal>
     </section>
   );
 }
@@ -511,6 +712,7 @@ function IntegrityCard({ title, description }) {
 function PlatformIntegrity() {
   return (
     <section id="integrity" className="bg-white border-b border-slate-200">
+      <Reveal>
       <div className="max-w-7xl mx-auto px-6 md:px-8 py-20 md:py-28">
         <div className="max-w-2xl mb-14">
           <SectionLabel>Platform Integrity</SectionLabel>
@@ -537,6 +739,7 @@ function PlatformIntegrity() {
           </p>
         </div>
       </div>
+      </Reveal>
     </section>
   );
 }
@@ -548,6 +751,7 @@ function PlatformIntegrity() {
 function HowItWorks() {
   return (
     <section id="how-it-works" className="bg-[#f8fafc] border-b border-slate-200">
+      <Reveal>
       <div className="max-w-7xl mx-auto px-6 md:px-8 py-20 md:py-28">
         <div className="max-w-xl mb-14">
           <SectionLabel>The Process</SectionLabel>
@@ -573,6 +777,7 @@ function HowItWorks() {
           ))}
         </div>
       </div>
+      </Reveal>
     </section>
   );
 }
@@ -584,6 +789,7 @@ function HowItWorks() {
 function PlatformPreview() {
   return (
     <section id="platform" className="bg-[#f8fafc] border-b border-slate-200">
+      <Reveal>
       <div className="max-w-7xl mx-auto px-6 md:px-8 py-20 md:py-28">
         <div className="text-center max-w-2xl mx-auto mb-14">
           <SectionLabel>Platform Preview</SectionLabel>
@@ -706,6 +912,7 @@ function PlatformPreview() {
           </div>
         </div>
       </div>
+      </Reveal>
     </section>
   );
 }
@@ -717,6 +924,7 @@ function PlatformPreview() {
 function Philosophy() {
   return (
     <section id="philosophy" className="bg-white border-b border-slate-200">
+      <Reveal>
       <div className="max-w-3xl mx-auto px-6 md:px-8 py-24 md:py-32 text-center">
         <SectionLabel>Our Belief</SectionLabel>
         <h2 className="text-2xl md:text-[30px] font-semibold tracking-tight text-[#0f172a] mb-10 leading-snug">Built for Long-Term Discipline</h2>
@@ -734,6 +942,7 @@ function Philosophy() {
           <span className="text-sm text-slate-600">No investment advice. No bias.</span>
         </div>
       </div>
+      </Reveal>
     </section>
   );
 }
@@ -745,6 +954,7 @@ function Philosophy() {
 function CTA() {
   return (
     <section id="cta" className="bg-[#f8fafc] border-b border-slate-200">
+      <Reveal>
       <div className="max-w-7xl mx-auto px-6 md:px-8 py-20 md:py-28">
         <div className="max-w-2xl mx-auto text-center mb-14">
           <SectionLabel>Get Started</SectionLabel>
@@ -807,6 +1017,7 @@ function CTA() {
           ))}
         </div>
       </div>
+      </Reveal>
     </section>
   );
 }
@@ -875,7 +1086,71 @@ function Footer() {
 export default function Page() {
   return (
     <>
-      <style>{`html { scroll-behavior: smooth; }`}</style>
+      <style>{`html { scroll-behavior: smooth; }
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-4px); }
+  100% { transform: translateY(0px); }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.hero-animate > * {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: heroReveal 0.6s ease forwards;
+}
+
+.hero-animate > *:nth-child(1) { animation-delay: 0.1s; }
+.hero-animate > *:nth-child(2) { animation-delay: 0.2s; }
+.hero-animate > *:nth-child(3) { animation-delay: 0.3s; }
+.hero-animate > *:nth-child(4) { animation-delay: 0.4s; }
+.hero-animate > *:nth-child(5) { animation-delay: 0.5s; }
+.hero-animate > *:nth-child(6) { animation-delay: 0.6s; }
+
+@keyframes heroReveal {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+/* Typing animation (no blinking cursor after finish) */
+
+.type-line {
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: none !important; /* ensure no cursor line */
+}
+.type-line::after {
+  content: none !important;
+}
+
+.type-line-1 {
+  width: 0;
+  animation: typing1 1.6s steps(22, end) 0.2s forwards;
+}
+
+.type-line-2 {
+  width: 0;
+  animation: typing2 1.8s steps(26, end) 1.9s forwards;
+}
+
+@keyframes typing1 {
+  from { width: 0 }
+  to { width: 22ch }
+}
+
+@keyframes typing2 {
+  from { width: 0 }
+  to { width: 26ch }
+}
+`}</style>
       <div className="font-sans antialiased text-[#0f172a] bg-[#f8fafc] transition-all duration-150">
         <Navbar />
         <main>
