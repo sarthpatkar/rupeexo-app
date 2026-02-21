@@ -1,6 +1,7 @@
+/* eslint-disable */
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 /* ─────────────────────────────────────────────
@@ -136,7 +137,7 @@ function PrimaryButton({ children, href = '#', className = '' }) {
   return (
     <a
       href={href}
-      className={`inline-flex items-center justify-center px-5 py-2.5 rounded-lg bg-[#1e3a8a] hover:bg-[#1e40af] text-white text-sm font-medium transition-colors duration-150 ${className}`}
+      className={`inline-flex items-center justify-center px-5 py-2.5 rounded-lg bg-[#1e3a8a] hover:bg-[#1e40af] text-white text-sm font-medium shadow-sm hover:shadow-md transition-all duration-150 ${className}`}
     >
       {children}
     </a>
@@ -147,7 +148,7 @@ function OutlineButton({ children, href = '#', className = '' }) {
   return (
     <a
       href={href}
-      className={`inline-flex items-center justify-center px-5 py-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-sm font-medium transition-colors duration-150 ${className}`}
+      className={`inline-flex items-center justify-center px-5 py-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 text-slate-700 text-sm font-medium transition-all duration-150 ${className}`}
     >
       {children}
     </a>
@@ -156,7 +157,7 @@ function OutlineButton({ children, href = '#', className = '' }) {
 
 function SectionLabel({ children }) {
   return (
-    <p className="text-xs font-semibold text-[#2563eb] uppercase tracking-[0.12em] mb-4">
+    <p className="text-[11px] font-semibold text-[#2563eb] uppercase tracking-[0.14em] mb-4">
       {children}
     </p>
   );
@@ -193,7 +194,7 @@ function MiniSparkline({ values, color }) {
 function DashboardPreview() {
   return (
     <div className="relative w-full max-w-[520px] mx-auto lg:mx-0 lg:ml-auto">
-      <div className="border border-slate-200 rounded-2xl bg-white shadow-sm overflow-hidden">
+      <div className="border border-slate-200 rounded-2xl bg-white shadow-[0_8px_30px_rgba(15,23,42,0.06)] overflow-hidden">
         {/* chrome */}
         <div className="border-b border-slate-100 px-5 py-3.5 flex items-center justify-between bg-slate-50">
           <div className="flex items-center gap-1.5">
@@ -326,39 +327,75 @@ function DashboardPreview() {
 
 function Navbar() {
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [active, setActive] = useState('');
+
+  useEffect(() => {
+    const onScroll = () => {
+      const y = window.scrollY || 0;
+      setScrolled(y > 10);
+
+      // Active section detection
+      const ids = NAV_LINKS.map(l => l.href.replace('#', '')).filter(Boolean);
+      let current = '';
+      for (const id of ids) {
+        const el = document.getElementById(id);
+        if (!el) continue;
+        const rect = el.getBoundingClientRect();
+        const offsetTop = rect.top + window.scrollY;
+        if (y + 120 >= offsetTop) current = id;
+      }
+      setActive(current);
+    };
+
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
   return (
-    <nav className="sticky top-0 z-50 bg-white border-b border-slate-200">
-      <div className="max-w-7xl mx-auto px-6 md:px-8 h-14 flex items-center justify-between">
-        <a href="#" className="flex items-center gap-2 select-none">
+    <nav className={`sticky top-0 z-50 bg-white/80 backdrop-blur border-b border-slate-200 transition-shadow duration-200 ${scrolled ? 'shadow-sm' : ''}`}>
+      <div className="max-w-7xl mx-auto px-6 md:px-8 h-16 flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-2 select-none">
           <div className="w-6 h-6 rounded bg-[#1e3a8a] flex items-center justify-center">
             <span className="text-white text-xs font-bold">R</span>
           </div>
           <span className="text-[#0f172a] font-semibold text-base tracking-tight">Rupeexo</span>
-        </a>
+        </Link>
 
-        <div className="hidden md:flex items-center gap-7">
-          {NAV_LINKS.map((l) => (
-            <a key={l.label} href={l.href} className="relative text-sm text-slate-600 hover:text-[#1e3a8a] group transition-colors duration-150">
-              {l.label}
-              <span className="absolute -bottom-0.5 left-0 w-0 h-px bg-[#2563eb] group-hover:w-full transition-all duration-200" />
-            </a>
-          ))}
+        <div className="hidden md:flex items-center gap-8">
+          {NAV_LINKS.map((l) => {
+            const id = l.href.replace('#', '');
+            const isActive = active === id;
+            return (
+              <a
+                key={l.label}
+                href={l.href}
+                className={`relative text-sm transition-colors duration-150 ${isActive ? 'text-[#1e3a8a]' : 'text-slate-500 hover:text-[#1e3a8a]'} group`}
+              >
+                {l.label}
+                <span
+                  className={`absolute -bottom-0.5 left-0 h-[1.5px] bg-[#2563eb] transition-all duration-200 ${isActive ? 'w-full' : 'w-0 group-hover:w-full'}`}
+                />
+              </a>
+            );
+          })}
         </div>
 
-       <div className="hidden md:flex items-center gap-3">
-  <Link
-    href="/login"
-    className="text-sm text-slate-600 hover:text-[#1e3a8a] transition-colors duration-150"
-  >
-    Log in
-  </Link>
+        <div className="hidden md:flex items-center gap-4">
+          <Link
+            href="/login"
+            className="text-sm text-slate-500 hover:text-[#1e3a8a] px-3 py-1.5 rounded-md hover:bg-slate-100 transition-all duration-150"
+          >
+            Log in
+          </Link>
 
-  <PrimaryButton href="/login">
-    Create Account →
-  </PrimaryButton>
-</div>
+          <PrimaryButton href="/login" className="px-5 py-2.5 hover:shadow-sm hover:-translate-y-[1px] transition-all duration-150">
+            Create Account →
+          </PrimaryButton>
+        </div>
 
-        <button className="md:hidden p-2 text-slate-600" onClick={() => setOpen(!open)} aria-label="Toggle menu">
+        <button className="md:hidden p-2 text-slate-600 transition-colors duration-150" onClick={() => setOpen(!open)} aria-label="Toggle menu">
           {open ? '✕' : '☰'}
         </button>
       </div>
@@ -381,24 +418,24 @@ function Navbar() {
 function Hero() {
   return (
     <section className="bg-[#f8fafc] border-b border-slate-200">
-      <div className="max-w-7xl mx-auto px-6 md:px-8 py-20 md:py-28">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
-          <div className="max-w-xl">
+      <div className="max-w-7xl mx-auto px-6 md:px-8 pt-6 md:pt-10 pb-20 md:pb-24">
+        <div className="grid lg:grid-cols-2 gap-16 items-center justify-items-center lg:justify-items-stretch">
+          <div className="max-w-xl mx-auto lg:mx-0 text-center lg:text-left">
             <Badge>Now in Public Beta</Badge>
-            <h1 className="mt-6 text-4xl md:text-5xl font-semibold text-[#0f172a] leading-[1.15] tracking-tight">
+            <h1 className="mt-7 md:mt-8 text-4xl md:text-5xl font-semibold text-[#0f172a] leading-[1.15] tracking-tight">
               Clarity Over Noise.
               <br />
               <span className="text-[#2563eb]">Intelligence Over Impulse.</span>
             </h1>
-            <p className="mt-5 text-lg text-slate-500 leading-relaxed">
+            <p className="mt-4 md:mt-5 text-lg text-slate-500 leading-relaxed">
               Rupeexo is a trust-first financial intelligence platform for disciplined, long-term investors. We surface what matters — fundamentals, risk, and structure — so every decision you make is grounded in understanding, not noise.
             </p>
             <p className="mt-3 text-sm text-slate-400 leading-relaxed">
               Built for investors who read balance sheets, think in decades, and refuse to act on speculation. If that's you, you're in the right place.
             </p>
-            <div className="mt-8 flex flex-wrap gap-3 items-center">
+            <div className="mt-8 flex flex-wrap gap-3 items-center justify-center lg:justify-start">
               <PrimaryButton href="#platform" className="px-6 py-3 text-base">Explore the Platform →</PrimaryButton>
-              <OutlineButton href="#how-it-works" className="px-6 py-3 text-base">See How It Works</OutlineButton>
+              <OutlineButton href="/auth/signup" className="px-6 py-3 text-base">Sign Up</OutlineButton>
             </div>
             <p className="mt-5 text-xs text-slate-400">No noise. No hype. No unsolicited recommendations. Ever.</p>
           </div>
@@ -431,7 +468,7 @@ function TrustStrip() {
 
 function FeatureCard({ title, description, icon }) {
   return (
-    <div className="group border border-slate-200 rounded-xl bg-white p-6 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-sm transition-all duration-200 cursor-default">
+    <div className="group border border-slate-200 rounded-xl bg-white p-6 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md transition-all duration-200 cursor-default">
       <div className="w-9 h-9 rounded-lg border border-slate-100 bg-slate-50 flex items-center justify-center text-[#1e3a8a] text-base mb-4">{icon}</div>
       <h3 className="text-base font-semibold text-[#0f172a] mb-2">{title}</h3>
       <p className="text-sm text-slate-500 leading-relaxed">{description}</p>
@@ -445,8 +482,8 @@ function Features() {
       <div className="max-w-7xl mx-auto px-6 md:px-8 py-20 md:py-28">
         <div className="max-w-2xl mb-14">
           <SectionLabel>Platform Capabilities</SectionLabel>
-          <h2 className="text-2xl md:text-3xl font-semibold text-[#0f172a] mb-4">Everything you need to invest with intention.</h2>
-          <p className="text-base text-slate-500 leading-relaxed">
+          <h2 className="text-2xl md:text-[30px] font-semibold tracking-tight text-[#0f172a] mb-4">Everything you need to invest with intention.</h2>
+          <p className="text-[15px] md:text-base text-slate-500 leading-relaxed">
             Rupeexo is not a trading tool. It's a thinking tool. Every feature is designed to help you understand your portfolio more deeply and act on analysis, not anxiety.
           </p>
         </div>
@@ -464,7 +501,7 @@ function Features() {
 
 function IntegrityCard({ title, description }) {
   return (
-    <div className="group border border-slate-200 rounded-xl bg-white p-6 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-sm transition-all duration-200 cursor-default">
+    <div className="group border border-slate-200 rounded-xl bg-white p-6 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md transition-all duration-200 cursor-default">
       <h3 className="text-base font-semibold text-[#0f172a] mb-2">{title}</h3>
       <p className="text-sm text-slate-500 leading-relaxed">{description}</p>
     </div>
@@ -477,10 +514,10 @@ function PlatformIntegrity() {
       <div className="max-w-7xl mx-auto px-6 md:px-8 py-20 md:py-28">
         <div className="max-w-2xl mb-14">
           <SectionLabel>Platform Integrity</SectionLabel>
-          <h2 className="text-2xl md:text-3xl font-semibold text-[#0f172a] mb-4">
+          <h2 className="text-2xl md:text-[30px] font-semibold tracking-tight text-[#0f172a] mb-4">
             Financial data you can trust.
           </h2>
-          <p className="text-base text-slate-500 leading-relaxed">
+          <p className="text-[15px] md:text-base text-slate-500 leading-relaxed">
             Rupeexo is built on a single principle: accuracy without agenda. Every number we display is sourced from verified regulatory filings and official exchange data. We do not offer investment advice, generate buy or sell signals, or make recommendations of any kind. Our role is to surface factual, structured financial intelligence — transparently, consistently, and without bias — so that your decisions remain entirely your own.
           </p>
         </div>
@@ -495,8 +532,8 @@ function PlatformIntegrity() {
             <p className="text-sm font-semibold text-slate-700">No investment advice. Ever.</p>
           </div>
           <div className="h-px sm:h-8 sm:w-px bg-slate-200 shrink-0" />
-          <p className="text-sm text-slate-500 leading-relaxed">
-            Rupeexo is not a SEBI-registered investment adviser and does not provide personalised recommendations. All data and analysis is strictly informational. Please consult a registered advisor before making any investment decisions.
+          <p className="text-[15px] md:text-base text-slate-500 leading-relaxed">
+            Rupeexo is a financial information and analytics platform. We are not a SEBI-registered investment adviser, research analyst, or broker. We do not provide investment advice, recommendations, or buy/sell signals of any kind. All data, analytics, and AI-generated interpretations are provided strictly for informational and educational purposes. Users are solely responsible for their investment decisions. Please consult a SEBI-registered financial adviser before making any investment decisions.
           </p>
         </div>
       </div>
@@ -514,8 +551,8 @@ function HowItWorks() {
       <div className="max-w-7xl mx-auto px-6 md:px-8 py-20 md:py-28">
         <div className="max-w-xl mb-14">
           <SectionLabel>The Process</SectionLabel>
-          <h2 className="text-2xl md:text-3xl font-semibold text-[#0f172a] mb-4">From data to disciplined action.</h2>
-          <p className="text-base text-slate-500 leading-relaxed">
+          <h2 className="text-2xl md:text-[30px] font-semibold tracking-tight text-[#0f172a] mb-4">From data to disciplined action.</h2>
+          <p className="text-[15px] md:text-base text-slate-500 leading-relaxed">
             Most platforms give you data and leave you to figure out the rest. Rupeexo structures your analysis into a repeatable process — so good investing becomes a habit.
           </p>
         </div>
@@ -531,7 +568,7 @@ function HowItWorks() {
                 {i < STEPS.length - 1 && <div className="md:hidden flex-1 h-px bg-slate-200" />}
               </div>
               <h3 className="text-lg font-semibold text-[#0f172a] mb-2">{step.title}</h3>
-              <p className="text-sm text-slate-500 leading-relaxed">{step.description}</p>
+              <p className="text-[15px] md:text-base text-slate-500 leading-relaxed">{step.description}</p>
             </div>
           ))}
         </div>
@@ -550,11 +587,11 @@ function PlatformPreview() {
       <div className="max-w-7xl mx-auto px-6 md:px-8 py-20 md:py-28">
         <div className="text-center max-w-2xl mx-auto mb-14">
           <SectionLabel>Platform Preview</SectionLabel>
-          <h2 className="text-2xl md:text-3xl font-semibold text-[#0f172a] mb-4">What structured financial intelligence looks like.</h2>
-          <p className="text-base text-slate-500">No jargon panels. No flashing tickers. Just clean, structured information laid out for a thinking investor.</p>
+          <h2 className="text-2xl md:text-[30px] font-semibold tracking-tight text-[#0f172a] mb-4">What structured financial intelligence looks like.</h2>
+          <p className="text-[15px] md:text-base text-slate-500">No jargon panels. No flashing tickers. Just clean, structured information laid out for a thinking investor.</p>
         </div>
 
-        <div className="border border-slate-200 rounded-2xl bg-white overflow-hidden shadow-sm">
+        <div className="border border-slate-200 rounded-2xl bg-white overflow-hidden shadow-[0_8px_30px_rgba(15,23,42,0.06)]">
           {/* chrome */}
           <div className="border-b border-slate-100 bg-slate-50 px-5 py-3 flex items-center gap-3">
             <div className="flex gap-1.5">
@@ -682,19 +719,19 @@ function Philosophy() {
     <section id="philosophy" className="bg-white border-b border-slate-200">
       <div className="max-w-3xl mx-auto px-6 md:px-8 py-24 md:py-32 text-center">
         <SectionLabel>Our Belief</SectionLabel>
-        <h2 className="text-2xl md:text-3xl font-semibold text-[#0f172a] mb-8 leading-snug">Built for Long-Term Discipline</h2>
-        <p className="text-base text-slate-500 leading-relaxed mb-6">
+        <h2 className="text-2xl md:text-[30px] font-semibold tracking-tight text-[#0f172a] mb-10 leading-snug">Built for Long-Term Discipline</h2>
+        <p className="text-[15px] md:text-base text-slate-500 leading-relaxed mb-7">
           Most financial products are designed to keep you active — clicking, reacting, trading. Rupeexo is designed for the opposite. We believe the best investing decisions come from deep understanding, not rapid response. From structure, not stimulation.
         </p>
-        <p className="text-base text-slate-500 leading-relaxed mb-6">
+        <p className="text-[15px] md:text-base text-slate-500 leading-relaxed mb-7">
           We will never surface trending stocks. We will never send you "buy now" alerts. We will never optimise for engagement at the cost of your clarity. Every design choice on this platform exists to help you think more carefully — and act less impulsively.
         </p>
-        <p className="text-base text-slate-500 leading-relaxed">
+        <p className="text-[15px] md:text-base text-slate-500 leading-relaxed mb-7">
           If you believe investing is a craft that rewards patience, rigour, and intellectual honesty, Rupeexo is built for you.
         </p>
-        <div className="mt-12 inline-flex items-center gap-3 border border-slate-200 rounded-full px-5 py-2.5">
+        <div className="mt-14 inline-flex items-center gap-3 border border-slate-200 rounded-full px-5 py-2.5">
           <div className="w-2 h-2 rounded-full bg-emerald-400" />
-          <span className="text-sm text-slate-600">Registered with SEBI. No investment advisory. No bias.</span>
+          <span className="text-sm text-slate-600">No investment advice. No bias.</span>
         </div>
       </div>
     </section>
@@ -709,22 +746,24 @@ function CTA() {
   return (
     <section id="cta" className="bg-[#f8fafc] border-b border-slate-200">
       <div className="max-w-7xl mx-auto px-6 md:px-8 py-20 md:py-28">
-        <div className="max-w-2xl mx-auto text-center mb-16">
+        <div className="max-w-2xl mx-auto text-center mb-14">
           <SectionLabel>Get Started</SectionLabel>
-          <h2 className="text-2xl md:text-4xl font-semibold text-[#0f172a] mb-5 leading-tight">
+          <h2 className="text-2xl md:text-4xl font-semibold tracking-tight text-[#0f172a] mb-5 leading-tight">
             Invest with Confidence.<br />Decide with Clarity.
           </h2>
-          <p className="text-base text-slate-500 leading-relaxed mb-8">
+          <p className="text-[15px] md:text-base text-slate-500 leading-relaxed mb-8">
             Join thousands of disciplined investors who use Rupeexo to cut through the noise and build portfolios grounded in fundamentals.
           </p>
-          <div className="flex flex-wrap justify-center gap-3 mb-6">
-            <PrimaryButton href="#" className="px-7 py-3 text-base">Start for Free →</PrimaryButton>
-            <OutlineButton href="#" className="px-7 py-3 text-base">Schedule a Demo</OutlineButton>
-          </div>
+          
           <p className="text-xs text-slate-400">Free plan available · No credit card required · Cancel anytime</p>
         </div>
-
-        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+        <div className="flex items-center justify-center gap-3 mb-6">
+          <div className="w-2 h-2 rounded-full bg-emerald-400" />
+          <p className="text-xs text-slate-500">
+            No investment advice · No broker integration · Cancel anytime
+          </p>
+        </div>
+        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto mt-0">
           {[
             {
               title: 'Free',
@@ -741,7 +780,10 @@ function CTA() {
               highlight: true,
             },
           ].map((plan) => (
-            <div key={plan.title} className={`border rounded-xl p-6 bg-white flex flex-col ${plan.highlight ? 'border-[#2563eb] shadow-sm' : 'border-slate-200'}`}>
+            <div
+              key={plan.title}
+              className={`border rounded-xl p-6 bg-white flex flex-col shadow-sm hover:shadow-md transition-all duration-150 ${plan.highlight ? 'border-[#2563eb]' : 'border-slate-200'}`}
+            >
               {plan.highlight && (
                 <span className="inline-flex mb-3 text-[11px] font-semibold text-[#2563eb] uppercase tracking-wider border border-blue-200 bg-blue-50 px-2.5 py-0.5 rounded-full">Most Popular</span>
               )}
@@ -758,7 +800,7 @@ function CTA() {
                   </div>
                 ))}
               </div>
-              <a href="#" className={`mt-auto block text-center w-full py-2.5 rounded-lg text-sm font-medium transition-colors duration-150 ${plan.highlight ? 'bg-[#1e3a8a] hover:bg-[#1e40af] text-white' : 'border border-slate-200 hover:bg-slate-50 text-slate-700'}`}>
+              <a href="/auth/signup" className={`mt-auto block text-center w-full py-2.5 rounded-lg text-sm font-medium transition-colors duration-150 ${plan.highlight ? 'bg-[#1e3a8a] hover:bg-[#1e40af] text-white' : 'border border-slate-200 hover:bg-slate-50 text-slate-700'}`}>
                 {plan.price === '₹0' ? 'Get Started Free' : 'Start Free Trial'}
               </a>
             </div>
@@ -777,34 +819,48 @@ function Footer() {
   return (
     <footer className="bg-white border-t border-slate-200">
       <div className="max-w-7xl mx-auto px-6 md:px-8 py-14">
-        <div className="grid md:grid-cols-5 gap-10">
-          <div className="md:col-span-2">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-x-10 gap-y-12 items-start">
+          <div className="col-span-2 md:col-span-2">
             <a href="#" className="flex items-center gap-2 mb-4 select-none">
               <div className="w-6 h-6 rounded bg-[#1e3a8a] flex items-center justify-center">
                 <span className="text-white text-xs font-bold">R</span>
               </div>
               <span className="text-[#0f172a] font-semibold text-base">Rupeexo</span>
             </a>
-            <p className="text-sm text-slate-400 leading-relaxed mb-4 max-w-xs">
+            <p className="text-sm text-slate-400 leading-relaxed mb-4 max-w-sm">
               Trust-first financial intelligence for disciplined, long-term investors. No noise. No hype. No unsolicited advice.
             </p>
-            <p className="text-xs text-slate-400">SEBI registered · Data sourced from BSE, NSE, and public filings.</p>
+            <p className="text-xs text-slate-400">Data sourced from BSE, NSE, and publicly available regulatory filings.</p>
           </div>
           {Object.entries(FOOTER_LINKS).map(([col, links]) => (
             <div key={col}>
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4">{col}</p>
               <div className="space-y-2.5">
                 {links.map((link) => (
-                  <a key={link} href="#" className="block text-sm text-slate-400 hover:text-slate-700 transition-colors duration-150">{link}</a>
+                  <a
+                    key={link}
+                    href={
+                      link === 'Privacy Policy'
+                        ? '/legal/privacy'
+                        : link === 'Terms of Service'
+                        ? '/legal/terms'
+                        : link === 'Security'
+                        ? '/legal/disclaimer'
+                        : '#'
+                    }
+                    className="block text-sm text-slate-400 hover:text-[#1e3a8a] transition-colors duration-150"
+                  >
+                    {link}
+                  </a>
                 ))}
               </div>
             </div>
           ))}
         </div>
-        <div className="mt-12 pt-6 border-t border-slate-100 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="mt-12 pt-6 border-t border-slate-100 flex flex-col md:flex-row items-center md:items-start justify-between gap-6 text-center md:text-left">
           <p className="text-xs text-slate-400">© {new Date().getFullYear()} Rupeexo Technologies Pvt. Ltd. All rights reserved.</p>
-          <p className="text-xs text-slate-400 max-w-md text-left md:text-right">
-            Rupeexo does not provide investment advice. All data is for informational purposes only. Please consult a registered advisor before making investment decisions.
+          <p className="text-xs text-slate-400 max-w-lg leading-relaxed mx-auto md:mx-0 text-center md:text-right">
+            Rupeexo is a financial information and analytics platform. We are not a SEBI-registered investment adviser, research analyst, or broker. We do not provide investment advice, recommendations, or buy/sell signals of any kind. All data, analytics, and AI-generated interpretations are provided strictly for informational and educational purposes. Users are solely responsible for their investment decisions. Please consult a SEBI-registered financial adviser before making any investment decisions.
           </p>
         </div>
       </div>
@@ -820,7 +876,7 @@ export default function Page() {
   return (
     <>
       <style>{`html { scroll-behavior: smooth; }`}</style>
-      <div className="font-sans antialiased text-[#0f172a] bg-[#f8fafc]">
+      <div className="font-sans antialiased text-[#0f172a] bg-[#f8fafc] transition-all duration-150">
         <Navbar />
         <main>
           <Hero />
