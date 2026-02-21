@@ -953,6 +953,57 @@ export default function Page() {
     <>
       <style>{`html { scroll-behavior: smooth; }
 
+/* Page load animation — cinematic */
+.page-enter {
+  animation: pageEnter 900ms cubic-bezier(0.22,1,0.36,1) both;
+}
+
+@keyframes pageEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.992);
+    filter: blur(6px);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(1.5px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+/* Stagger sections on first load */
+.page-enter main > * {
+  opacity: 0;
+  transform: translateY(16px) scale(0.995);
+  animation: sectionEnter 700ms cubic-bezier(0.22,1,0.36,1) both;
+}
+
+.page-enter main > *:nth-child(1) { animation-delay: 120ms; }
+.page-enter main > *:nth-child(2) { animation-delay: 180ms; }
+.page-enter main > *:nth-child(3) { animation-delay: 240ms; }
+.page-enter main > *:nth-child(4) { animation-delay: 300ms; }
+.page-enter main > *:nth-child(5) { animation-delay: 360ms; }
+.page-enter main > *:nth-child(6) { animation-delay: 420ms; }
+.page-enter main > *:nth-child(7) { animation-delay: 480ms; }
+
+@keyframes sectionEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(16px) scale(0.995);
+    filter: blur(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
 @keyframes float {
   0% { transform: translateY(0px); }
   50% { transform: translateY(-4px); }
@@ -1093,7 +1144,7 @@ export default function Page() {
   transform: translateY(0);
 }
 `}</style>
-      <div className="font-sans antialiased text-[#0f172a] bg-[#f8fafc] transition-all duration-150">
+      <div className="page-enter font-sans antialiased text-[#0f172a] bg-[#f8fafc] transition-all duration-150">
         <CursorHalo />
         <Navbar />
         <main>
