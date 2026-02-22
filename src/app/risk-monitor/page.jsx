@@ -1,24 +1,41 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 export default function RiskMonitorPage() {
   const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
   const isActive = (path) => pathname === path;
 
   return (
     <div className="flex flex-col h-screen bg-[#f8fafc] font-sans text-slate-800 overflow-hidden">
       
-      {/* Navbar */}
-      <nav className="h-16 bg-white border-b border-slate-200 flex items-center px-6 shrink-0 z-10 shadow-sm">
-        <Link href="/" className="flex items-center gap-2.5 cursor-pointer">
-          <div className="w-8 h-8 bg-[#1d3570] text-white flex items-center justify-center font-bold text-lg rounded-md shadow-sm">R</div>
-          <span className="text-[22px] font-bold text-[#1e293b] tracking-tight">Rupeexo</span>
+      <nav className="h-16 bg-white border-b border-slate-200 flex items-center px-8 shrink-0 z-10">
+        <Link href="/" className="flex items-center gap-2 select-none">
+          <div className="w-7 h-7 rounded bg-[#1e3a8a] flex items-center justify-center">
+            <span className="text-white text-sm font-bold">R</span>
+          </div>
+          <span className="text-[#0f172a] font-semibold text-lg tracking-tight">
+            Rupeexo
+          </span>
         </Link>
-        <div className="ml-auto flex items-center gap-4">
-          <div className="text-sm font-medium text-slate-500">app.rupeexo.com/risk-monitor</div>
+
+        <div className="ml-auto flex items-center gap-3">
+          <div className="hidden md:block text-sm font-medium text-slate-500">
+            app.rupeexo.com/risk-monitor
+          </div>
+
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="md:hidden w-10 h-10 flex flex-col items-center justify-center gap-[5px] rounded-lg border border-slate-200 bg-white"
+            aria-label="Toggle menu"
+          >
+            <span className={`block h-[2px] w-5 bg-slate-600 transition ${mobileOpen ? 'rotate-45 translate-y-[6px]' : ''}`} />
+            <span className={`block h-[2px] w-5 bg-slate-600 transition ${mobileOpen ? 'opacity-0' : ''}`} />
+            <span className={`block h-[2px] w-5 bg-slate-600 transition ${mobileOpen ? '-rotate-45 -translate-y-[6px]' : ''}`} />
+          </button>
         </div>
       </nav>
 
@@ -26,7 +43,7 @@ export default function RiskMonitorPage() {
       <div className="flex flex-1 overflow-hidden">
         
         {/* Sidebar */}
-        <aside className="w-64 bg-[#f8fafc] border-r border-slate-200 flex flex-col pt-6 pb-4 shrink-0 overflow-y-auto">
+        <aside className="hidden md:flex w-64 bg-[#f8fafc] border-r border-slate-200 flex-col pt-6 pb-4 shrink-0 overflow-y-auto">
           <nav className="px-4 space-y-1.5 mb-8">
             <Link href="/portfolio" className={`block px-4 py-2.5 rounded-lg text-[13px] transition-colors ${isActive('/portfolio') ? 'bg-white shadow-sm border border-slate-200 text-[#1d3570] font-semibold' : 'text-slate-500 hover:bg-slate-100'}`}>Overview</Link>
             <Link href="/holdings" className={`block px-4 py-2.5 rounded-lg text-[13px] transition-colors ${isActive('/holdings') ? 'bg-white shadow-sm border border-slate-200 text-[#1d3570] font-semibold' : 'text-slate-500 hover:bg-slate-100'}`}>Holdings</Link>
@@ -37,8 +54,29 @@ export default function RiskMonitorPage() {
           </nav>
         </aside>
 
+        {/* Mobile Sidebar */}
+        {mobileOpen && (
+          <div className="fixed inset-0 z-40 md:hidden">
+            <div
+              className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+              onClick={() => setMobileOpen(false)}
+            />
+
+            <div className="absolute left-0 top-0 bottom-0 w-72 bg-white shadow-xl p-6 overflow-y-auto">
+              <nav className="space-y-2">
+                <Link href="/portfolio" onClick={() => setMobileOpen(false)} className={`block px-4 py-2.5 rounded-lg text-[13px] transition-colors ${isActive('/portfolio') ? 'bg-white shadow-sm border border-slate-200 text-[#1d3570] font-semibold' : 'text-slate-500 hover:bg-slate-100'}`}>Overview</Link>
+                <Link href="/holdings" onClick={() => setMobileOpen(false)} className={`block px-4 py-2.5 rounded-lg text-[13px] transition-colors ${isActive('/holdings') ? 'bg-white shadow-sm border border-slate-200 text-[#1d3570] font-semibold' : 'text-slate-500 hover:bg-slate-100'}`}>Holdings</Link>
+                <Link href="/fundamentals" onClick={() => setMobileOpen(false)} className={`block px-4 py-2.5 rounded-lg text-[13px] transition-colors ${isActive('/fundamentals') ? 'bg-white shadow-sm border border-slate-200 text-[#1d3570] font-semibold' : 'text-slate-500 hover:bg-slate-100'}`}>Fundamentals</Link>
+                <Link href="/risk-monitor" onClick={() => setMobileOpen(false)} className={`block px-4 py-2.5 rounded-lg text-[13px] transition-colors ${isActive('/risk-monitor') ? 'bg-white shadow-sm border border-slate-200 text-[#1d3570] font-semibold' : 'text-slate-500 hover:bg-slate-100'}`}>Risk Monitor</Link>
+                <Link href="/ai-summaries" onClick={() => setMobileOpen(false)} className={`block px-4 py-2.5 rounded-lg text-[13px] transition-colors ${isActive('/ai-summaries') ? 'bg-white shadow-sm border border-slate-200 text-[#1d3570] font-semibold' : 'text-slate-500 hover:bg-slate-100'}`}>AI Summaries</Link>
+                <Link href="/watchlist" onClick={() => setMobileOpen(false)} className={`block px-4 py-2.5 rounded-lg text-[13px] transition-colors ${isActive('/watchlist') ? 'bg-white shadow-sm border border-slate-200 text-[#1d3570] font-semibold' : 'text-slate-500 hover:bg-slate-100'}`}>Watchlist</Link>
+              </nav>
+            </div>
+          </div>
+        )}
+
         {/* --- MAIN CONTENT AREA FOR RISK MONITOR --- */}
-        <main className="flex-1 p-8 overflow-y-auto bg-white">
+        <main className="flex-1 p-4 md:p-8 overflow-y-auto bg-[#f8fafc]">
           <div className="max-w-4xl mx-auto space-y-8">
             
             <div className="flex items-center justify-between border-b border-slate-100 pb-5">

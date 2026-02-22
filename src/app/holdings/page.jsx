@@ -14,6 +14,7 @@ const FAMOUS_COMPANIES = [
 ];
 
 export default function PortfolioPage() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const pathname = usePathname();
   const dropdownRef = useRef(null);
 
@@ -73,19 +74,30 @@ export default function PortfolioPage() {
       {/* Navbar */}
       <nav className="h-16 bg-white border-b border-slate-200 flex items-center px-8 shrink-0 z-10">
         <Link href="/" className="flex items-center gap-3 cursor-pointer">
-          <div className="w-8 h-8 bg-[#1e3a8a] text-white flex items-center justify-center font-bold text-lg rounded-md">R</div>
-          <span className="text-[22px] font-bold text-[#0f172a] tracking-tight">Rupeexo</span>
+          <div className="w-8 h-8 bg-[#1e3a8a] text-white flex items-center justify-center font-bold text-lg rounded-md">
+            R
+          </div>
+          <span className="text-[22px] font-bold text-[#0f172a] tracking-tight">
+            Rupeexo
+          </span>
         </Link>
-        <div className="ml-auto flex items-center gap-5">
-          <Link href="/dashboard" className="flex items-center gap-1.5 text-[13px] font-semibold text-slate-600 bg-slate-50 hover:bg-slate-100 hover:text-[#1d3570] border border-slate-200 px-3.5 py-1.5 rounded-lg transition-colors shadow-sm">
-            <span className="text-lg leading-none mb-0.5">←</span> Dashboard
-          </Link>
+
+        <div className="ml-auto flex items-center gap-3">
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden w-10 h-10 flex flex-col items-center justify-center gap-[5px] rounded-lg border border-slate-200 bg-white"
+            aria-label="Toggle menu"
+          >
+            <span className={`block h-[2px] w-5 bg-slate-600 transition ${mobileMenuOpen ? 'rotate-45 translate-y-[6px]' : ''}`} />
+            <span className={`block h-[2px] w-5 bg-slate-600 transition ${mobileMenuOpen ? 'opacity-0' : ''}`} />
+            <span className={`block h-[2px] w-5 bg-slate-600 transition ${mobileMenuOpen ? '-rotate-45 -translate-y-[6px]' : ''}`} />
+          </button>
         </div>
       </nav>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar */}
-        <aside className="w-64 bg-[#f8fafc] border-r border-slate-200 flex flex-col pt-8 pb-4 shrink-0 overflow-y-auto">
+        {/* Desktop Sidebar */}
+        <aside className="hidden md:flex w-64 bg-[#f8fafc] border-r border-slate-200 flex-col pt-8 pb-4 shrink-0 overflow-y-auto">
           <nav className="px-4 space-y-1.5 mb-8">
             <Link href="/portfolio" className={navLinkClass('/portfolio')}>Overview</Link>
             <Link href="/holdings" className={navLinkClass('/holdings')}>Holdings</Link>
@@ -96,8 +108,29 @@ export default function PortfolioPage() {
           </nav>
         </aside>
 
+        {/* Mobile Sidebar */}
+        {mobileMenuOpen && (
+          <div className="fixed inset-0 z-40 md:hidden">
+            <div
+              className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+              onClick={() => setMobileMenuOpen(false)}
+            />
+
+            <div className="absolute left-0 top-0 bottom-0 w-72 bg-white shadow-xl p-6 overflow-y-auto">
+              <nav className="space-y-2">
+                <Link href="/portfolio" onClick={() => setMobileMenuOpen(false)} className={navLinkClass('/portfolio')}>Overview</Link>
+                <Link href="/holdings" onClick={() => setMobileMenuOpen(false)} className={navLinkClass('/holdings')}>Holdings</Link>
+                <Link href="/fundamentals" onClick={() => setMobileMenuOpen(false)} className={navLinkClass('/fundamentals')}>Fundamentals</Link>
+                <Link href="/risk-monitor" onClick={() => setMobileMenuOpen(false)} className={navLinkClass('/risk-monitor')}>Risk Monitor</Link>
+                <Link href="/ai-summaries" onClick={() => setMobileMenuOpen(false)} className={navLinkClass('/ai-summaries')}>AI Summaries</Link>
+                <Link href="/watchlist" onClick={() => setMobileMenuOpen(false)} className={navLinkClass('/watchlist')}>Watchlist</Link>
+              </nav>
+            </div>
+          </div>
+        )}
+
         {/* Main Content */}
-        <main className="flex-1 p-8 overflow-y-auto bg-[#f8fafc]">
+        <main className="flex-1 p-4 md:p-8 overflow-y-auto bg-[#f8fafc]">
           <div className="max-w-[1200px] mx-auto space-y-6">
             <div className="flex items-center justify-between pb-2">
               <h1 className="text-2xl font-bold text-slate-800">Your Portfolio</h1>

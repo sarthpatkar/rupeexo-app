@@ -107,11 +107,55 @@ export default function PortfolioPage() {
         </div>
       </nav>
 
+      {/* ── MOBILE MENU ── */}
+      {isMenuOpen && (
+        <div className="fixed inset-0 z-[90] md:hidden">
+          <div 
+            className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+            onClick={() => setIsMenuOpen(false)}
+          />
+          
+          <div className="absolute top-0 left-0 h-full w-72 bg-white shadow-xl border-r border-slate-200 p-6 flex flex-col">
+            
+            {/* Top Links */}
+            <div className="space-y-2 mb-6">
+              {TOP_NAV_LINKS.map(({ label, href }) => (
+                <Link
+                  key={label}
+                  href={href}
+                  onClick={() => setIsMenuOpen(false)}
+                  className={`block px-4 py-2 rounded-lg text-sm ${
+                    pathname === href
+                      ? 'bg-blue-50 text-[#1e3a8a] font-semibold'
+                      : 'text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  {label}
+                </Link>
+              ))}
+            </div>
+
+            <div className="border-t border-slate-200 pt-4 space-y-2">
+              {SIDEBAR_LINKS.map(({ label, href }) => (
+                <Link
+                  key={label}
+                  href={href}
+                  onClick={() => setIsMenuOpen(false)}
+                  className="block px-4 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-50"
+                >
+                  {label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── BODY ── */}
       <div className="flex flex-1 overflow-hidden">
         
         {/* Sidebar - Match width w-64 */}
-        <aside className="w-64 bg-[#f0f4f8] border-r border-slate-200 flex flex-col pt-8 pb-4 shrink-0 overflow-y-auto">
+        <aside className="hidden md:flex w-64 bg-[#f0f4f8] border-r border-slate-200 flex-col pt-8 pb-4 shrink-0 overflow-y-auto">
           <nav className="px-4 space-y-1.5 mb-8">
             {SIDEBAR_LINKS.map(({ label, href }) => (
               <Link
@@ -142,8 +186,8 @@ export default function PortfolioPage() {
         </aside>
 
         {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto bg-[#f0f4f8] px-8 py-7">
-          <div className="max-w-6xl mx-auto space-y-6">
+        <main className="flex-1 overflow-y-auto bg-[#f0f4f8] px-4 md:px-8 py-6 md:py-7">
+          <div className="max-w-6xl mx-auto space-y-6 w-full">
             
             <div className="flex items-center justify-between pb-2">
               <h1 className="text-2xl font-bold text-slate-800">Portfolio Overview</h1>
