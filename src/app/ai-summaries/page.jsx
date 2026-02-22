@@ -28,11 +28,10 @@ export default function AiSummariesPage() {
         </Link>
 
         <div className="ml-auto flex items-center gap-3">
-          <div className="hidden md:block text-sm font-medium text-slate-500">
-            app.rupeexo.com/ai-summaries
-          </div>
+          
 
           <button
+            id="hamburger-btn"
             onClick={() => setMobileOpen(!mobileOpen)}
             className="md:hidden w-9 h-9 flex flex-col items-center justify-center gap-[5px] rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-all duration-150"
             aria-label="Toggle menu"
@@ -90,7 +89,7 @@ export default function AiSummariesPage() {
         </aside>
 
         {mobileOpen && (
-          <div className="fixed inset-0 z-40 md:hidden">
+          <div id="mobile-menu" className="fixed inset-0 z-40 md:hidden">
             <div
               className="absolute inset-0 bg-black/30 backdrop-blur-sm"
               onClick={() => setMobileOpen(false)}
