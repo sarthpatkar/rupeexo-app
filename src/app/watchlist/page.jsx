@@ -46,9 +46,22 @@ const INITIAL_WATCHLISTS = [
   { id: 2, name: 'High Conviction', symbols: ['INFY', 'ICICIBANK'] },
 ];
 
+/* Deterministic seeded PRNG (mulberry32) — same output on SSR and client */
+function seededRandom(seed) {
+  let s = seed >>> 0;
+  return function () {
+    s += 0x6d2b79f5;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t ^= t + Math.imul(t ^ (t >>> 7), 61 | t);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
 function generateHistory(base, days = 90) {
+  /* seed derived from the base price so every stock gets a unique but stable series */
+  const rand = seededRandom(Math.round(base * 100));
   const h = []; let p = base * 0.88;
-  for (let i = 0; i < days; i++) { p *= 1 + (Math.random() - 0.48) * 0.025; h.push(+p.toFixed(2)); }
+  for (let i = 0; i < days; i++) { p *= 1 + (rand() - 0.48) * 0.025; h.push(+p.toFixed(2)); }
   h[h.length - 1] = base; return h;
 }
 
