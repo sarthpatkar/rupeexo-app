@@ -34,38 +34,20 @@ export default function FundamentalsPage() {
   return (
     <div className="flex flex-col h-screen bg-[#f8fafc] font-sans text-slate-800 overflow-hidden relative">
       
-      {/* ── NAVBAR (Matched small logo & responsive menu) ── */}
-      <nav className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 md:px-8 shrink-0 z-50 relative">
-        <div className="flex items-center gap-3">
-          <Link href="/" className="flex items-center gap-2 select-none">
-            <div className="w-6 h-6 rounded bg-[#1e3a8a] flex items-center justify-center">
-              <span className="text-white text-[10px] font-bold">R</span>
-            </div>
-            <span className="text-[#0f172a] font-semibold text-base tracking-tight">Rupeexo</span>
-          </Link>
-        </div>
+      {/* ── NAVBAR (Reference matched) ── */}
+      <nav className="h-16 bg-white border-b border-slate-200 flex items-center px-8 shrink-0 z-10">
+        <Link href="/" className="flex items-center gap-2 select-none">
+          <div className="w-7 h-7 rounded bg-[#1e3a8a] flex items-center justify-center">
+            <span className="text-white text-sm font-bold">R</span>
+          </div>
+          <span className="text-[#0f172a] font-semibold text-lg tracking-tight">
+            Rupeexo
+          </span>
+        </Link>
 
-        <div className="hidden md:flex items-center gap-1">
-          {TOP_NAV_LINKS.map(({ label, href }) => (
-            <Link 
-              key={label} 
-              href={href} 
-              className={`px-4 py-2 text-sm transition-colors ${pathname === href ? 'text-[#1e3a8a] font-bold' : 'text-slate-500 hover:text-[#1e3a8a]'}`}
-            >
-              {label}
-            </Link>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-3">
-          <button className="relative w-9 h-9 flex items-center justify-center rounded-lg border border-slate-200 bg-white">
-            <Bell className="w-4 h-4 text-slate-500" />
-            <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-[#2563eb]" />
-          </button>
-
-          {/* Hamburger — mobile only */}
+        <div className="ml-auto flex items-center gap-3">
           <button
-            onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+            onClick={() => setMobileSidebarOpen((o) => !o)}
             className="md:hidden w-9 h-9 flex flex-col items-center justify-center gap-[5px] rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-all duration-150"
             aria-label="Toggle menu"
           >
