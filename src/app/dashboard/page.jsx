@@ -119,8 +119,9 @@ function CursorHalo() {
    NAVBAR
 ───────────────────────────────────────────── */
 
-function Navbar() {
+function Navbar({ userName }) {
   const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
   const currentPath = pathname;
   const router = useRouter();
@@ -130,6 +131,12 @@ function Navbar() {
     await supabase.auth.signOut();
     router.replace('/login');
   };
+
+  const toggleTheme = () => {
+    document.documentElement.classList.toggle('dark');
+  };
+
+  const initial = userName ? userName.charAt(0).toUpperCase() : 'U';
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -176,20 +183,44 @@ function Navbar() {
         </div>
 
         {/* Right Actions */}
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleLogout}
-            className="px-3 py-1.5 text-xs font-medium border border-slate-200 rounded-lg bg-white hover:bg-slate-50 text-slate-600 transition"
-          >
-            Logout
-          </button>
+        <div className="flex items-center gap-3 relative">
           <button className="relative w-9 h-9 flex items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 transition-all duration-150">
             <Bell className="w-4 h-4" />
             <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-[#2563eb]" />
           </button>
-          <div className="w-9 h-9 rounded-lg bg-[#1e3a8a] flex items-center justify-center">
-            <span className="text-white text-sm font-semibold">A</span>
-          </div>
+
+          {/* User Avatar */}
+          <button
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="w-9 h-9 rounded-lg bg-[#1e3a8a] flex items-center justify-center"
+          >
+            <span className="text-white text-sm font-semibold">{initial}</span>
+          </button>
+
+          {/* Dropdown Menu */}
+          {menuOpen && (
+            <div className="absolute right-0 top-12 w-56 bg-white border border-slate-200 rounded-xl shadow-lg p-2 z-50">
+              <button className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 rounded">
+                Profile (Change password, phone)
+              </button>
+              <button className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 rounded">
+                Refer & Earn
+              </button>
+              <button
+                onClick={toggleTheme}
+                className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 rounded"
+              >
+                Settings (Dark / Light Mode)
+              </button>
+              <hr className="my-2" />
+              <button
+                onClick={handleLogout}
+                className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded"
+              >
+                Logout
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </nav>
@@ -431,7 +462,7 @@ export default function Dashboard() {
 
       <div className="page-enter min-h-screen bg-[#f8fafc] text-[#0f172a] font-sans antialiased">
         <CursorHalo />
-        <Navbar />
+        <Navbar userName={userName} />
 
         <div className="relative max-w-7xl mx-auto px-6 md:px-8 py-10 space-y-10">
 
