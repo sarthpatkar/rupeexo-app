@@ -36,6 +36,11 @@ export default function PortfolioPage() {
     { label: 'AI Summaries', href: '/ai-summaries' },
   ];
 
+  const isActivePath = (href) => {
+    if (href === '/portfolio') return pathname.startsWith('/portfolio');
+    return pathname === href;
+  };
+
   const formatCurrency = (val) => 
     new Intl.NumberFormat('en-IN', { 
       style: 'currency', 
@@ -141,7 +146,11 @@ export default function PortfolioPage() {
                   key={label}
                   href={href}
                   onClick={() => setIsMenuOpen(false)}
-                  className="block px-4 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-50"
+                  className={`block px-4 py-2 rounded-lg text-sm ${
+                    isActivePath(href)
+                      ? 'bg-blue-50 text-[#1e3a8a] font-semibold'
+                      : 'text-slate-600 hover:bg-slate-50'
+                  }`}
                 >
                   {label}
                 </Link>
@@ -162,7 +171,7 @@ export default function PortfolioPage() {
                 key={label}
                 href={href}
                 className={`block px-4 py-2.5 rounded-lg text-[13px] transition-colors ${
-                  pathname === href
+                  isActivePath(href)
                     ? 'bg-white shadow-sm border border-slate-200 text-[#1e3a8a] font-semibold'
                     : 'text-slate-500 hover:bg-white/60 hover:text-slate-700 font-medium'
                 }`}
@@ -189,11 +198,18 @@ export default function PortfolioPage() {
         <main className="flex-1 overflow-y-auto bg-[#f0f4f8] px-4 md:px-8 py-6 md:py-7">
           <div className="max-w-6xl mx-auto space-y-6 w-full">
             
-            <div className="flex items-center justify-between pb-2">
-              <h1 className="text-2xl font-bold text-slate-800">Portfolio Overview</h1>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-2">
+              
+              {/* Title Card — visible when on Portfolio Overview */}
+              {pathname.startsWith('/portfolio') && (
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm px-6 py-4">
+                  <h1 className="text-2xl font-bold text-slate-800">Portfolio Overview</h1>
+                </div>
+              )}
+
               <button 
                 onClick={() => setIsModalOpen(true)}
-                className="bg-[#1e3a8a] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#152754] transition-all flex items-center gap-2 shadow-sm"
+                className="self-start md:self-auto bg-[#1e3a8a] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#152754] transition-all flex items-center gap-2 shadow-sm"
               >
                 <Plus size={16} /> Add Transaction
               </button>
