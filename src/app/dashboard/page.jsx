@@ -3,6 +3,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
+import { createClient } from '@supabase/supabase-js';
 import {
   LayoutGrid,
   Search,
@@ -31,6 +33,11 @@ import {
   Cell,
   Sector,
 } from 'recharts';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
 
 /* ─────────────────────────────────────────────
    SPARKLINE
@@ -87,10 +94,10 @@ const holdings = [
 
 const NAV_LINKS = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutGrid },
-  { label: 'Portfolio', href: '/portfolio', icon: LayoutGrid },
-  { label: 'Screener', href: '/screener', icon: Search },
-  { label: 'Analysis', href: '/analysis', icon: BarChart3 },
-  { label: 'Watchlist', href: '/watchlist', icon: Eye },
+  { label: 'Portfolio', href: '/dashboard/portfolio', icon: LayoutGrid },
+  { label: 'Screener', href: '/dashboard/screener', icon: Search },
+  { label: 'Analysis', href: '/dashboard/analysis', icon: BarChart3 },
+  { label: 'Watchlist', href: '/dashboard/watchlist', icon: Eye },
 ];
 
 /* ─────────────────────────────────────────────
@@ -117,7 +124,8 @@ function CursorHalo() {
 
 function Navbar() {
   const [scrolled, setScrolled] = useState(false);
-  const currentPath = '/dashboard';
+  const pathname = usePathname();
+  const currentPath = pathname;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -292,14 +300,49 @@ export default function Dashboard() {
   const [mounted, setMounted] = useState(false);
   const [activeIndex, setActiveIndex] = useState(null);
   const [lastUpdated] = useState('4 min ago');
-  const userName = 'Abhishek';
+  const router = useRouter();
+  const [userName, setUserName] = useState('');
+  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  useEffect(() => {
+    const initAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session) {
+        router.replace('/login');
+        return;
+      }
+
+      const user = session.user;
+
+      // Fetch profile name if exists
+      let name = '';
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user.id)
+        .single();
+
+      name =
+        profile?.full_name ||
+        user.user_metadata?.full_name ||
+        (user.email ? user.email.split('@')[0] : 'User');
+
+      setUserName(name);
+      setAuthChecked(true);
+    };
+
+    initAuth();
+  }, [router]);
+
   const fmt = (val) =>
     mounted ? `₹${Number(val).toLocaleString('en-IN')}` : '';
+
+  if (!authChecked) return null;
 
   return (
     <>
@@ -511,7 +554,7 @@ export default function Dashboard() {
                 <div>
                   <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Top Holdings</p>
                 </div>
-                <Link href="/portfolio" className="text-xs text-[#2563eb] hover:underline font-medium">
+                <Link href="/dashboard/portfolio" className="text-xs text-[#2563eb] hover:underline font-medium">
                   View all →
                 </Link>
               </div>
@@ -601,25 +644,25 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {[
                 {
-                  href: '/portfolio',
+                  href: '/dashboard/portfolio',
                   Icon: LayoutGrid,
                   label: 'Portfolio',
                   description: 'Holdings, allocation & XIRR',
                 },
                 {
-                  href: '/screener',
+                  href: '/dashboard/screener',
                   Icon: Search,
                   label: 'Screener',
                   description: 'Filter stocks by fundamentals',
                 },
                 {
-                  href: '/analysis',
+                  href: '/dashboard/analysis',
                   Icon: BarChart3,
                   label: 'Analysis',
                   description: 'Ratios, margins & growth trends',
                 },
                 {
-                  href: '/watchlist',
+                  href: '/dashboard/watchlist',
                   Icon: Eye,
                   label: 'Watchlist',
                   description: 'Track companies of interest',

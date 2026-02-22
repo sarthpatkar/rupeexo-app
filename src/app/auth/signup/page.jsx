@@ -312,12 +312,21 @@ export default function SignUpPage() {
   async function handleGoogleLogin() {
     const supabase = createClient()
 
-    await supabase.auth.signInWithOAuth({
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${location.origin}/auth/callback`,
+        redirectTo: `${location.origin}/dashboard`,
       },
     })
+
+    if (error) {
+      alert(error.message)
+      return
+    }
+
+    if (data?.url) {
+      window.location.href = data.url
+    }
   }
 
   const passwordRules = [

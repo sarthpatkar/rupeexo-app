@@ -203,7 +203,7 @@ async function handleSubmit(e) {
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${location.origin}/auth/callback`,
+        redirectTo: `${location.origin}/dashboard`,
       },
     })
   }
@@ -526,7 +526,7 @@ async function handleSubmit(e) {
                 style={{ color: "#475569" }}
               >
                 Don&rsquo;t have an account?{" "}
-                <a
+                <Link
                   href="/auth/signup"
                   className="font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#2563eb] rounded-sm"
                   style={{ color: "#2563eb" }}
@@ -534,7 +534,7 @@ async function handleSubmit(e) {
                   onMouseLeave={(e) => (e.currentTarget.style.color = "#2563eb")}
                 >
                   Create one
-                </a>
+                </Link>
               </p>
             </div>
             {/* End Card */}
