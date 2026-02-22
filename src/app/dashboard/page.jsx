@@ -1,253 +1,643 @@
-"use client";
+/* eslint-disable */
+'use client';
+
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import React, { useState, useEffect } from 'react';
-import { 
-  BarChart3, Search, Eye, ShieldCheck, TrendingUp, Zap, ChevronRight, LayoutGrid
+import {
+  LayoutGrid,
+  Search,
+  BarChart3,
+  Eye,
+  Bell,
+  TrendingUp,
+  TrendingDown,
+  ShieldCheck,
+  ChevronRight,
+  RefreshCw,
+  ArrowUpRight,
+  ArrowDownRight,
+  Zap,
 } from 'lucide-react';
-import { 
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-  ComposedChart, Area, PieChart, Pie, Cell, Sector
+import {
+  ResponsiveContainer,
+  ComposedChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  PieChart,
+  Pie,
+  Cell,
+  Sector,
 } from 'recharts';
 
-// --- DATA ---
+/* ─────────────────────────────────────────────
+   SPARKLINE
+───────────────────────────────────────────── */
+
+function MiniSparkline({ values, color }) {
+  const max = Math.max(...values);
+  const min = Math.min(...values);
+  const range = max - min || 1;
+  const w = 72;
+  const h = 24;
+  const pts = values
+    .map((v, i) => {
+      const x = (i / (values.length - 1)) * w;
+      const y = h - ((v - min) / range) * h;
+      return `${x},${y}`;
+    })
+    .join(' ');
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="overflow-visible">
+      <polyline points={pts} fill="none" stroke={color} strokeWidth="1.5" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   DATA
+───────────────────────────────────────────── */
+
 const performanceData = [
-  { date: 'Jan', value: 1240000, profit: 0 },
-  { date: 'Feb', value: 1380000, profit: 140000 },
-  { date: 'Mar', value: 1310000, profit: 70000 },
-  { date: 'Apr', value: 1550000, profit: 310000 },
-  { date: 'May', value: 1720000, profit: 480000 },
-  { date: 'Jun', value: 1843620, profit: 603620 },
+  { date: 'Jan', value: 1240000 },
+  { date: 'Feb', value: 1380000 },
+  { date: 'Mar', value: 1310000 },
+  { date: 'Apr', value: 1550000 },
+  { date: 'May', value: 1720000 },
+  { date: 'Jun', value: 1843620 },
 ];
 
 const allocationData = [
-  { name: 'Direct Equity', value: 1198353, percentage: 65, color: '#4f46e5' }, // Matching Indigo
-  { name: 'Mutual Funds', value: 368724, percentage: 20, color: '#10b981' },
-  { name: 'Digital Gold', value: 147489, percentage: 8, color: '#f59e0b' },
-  { name: 'Liquid Cash', value: 92181, percentage: 5, color: '#64748b' },
-  { name: 'Crypto Assets', value: 36873, percentage: 2, color: '#ec4899' },
+  { name: 'Direct Equity', value: 65, color: '#1e3a8a' },
+  { name: 'Mutual Funds', value: 20, color: '#2563eb' },
+  { name: 'Digital Gold', value: 8, color: '#f59e0b' },
+  { name: 'Liquid Cash', value: 5, color: '#94a3b8' },
+  { name: 'Crypto', value: 2, color: '#64748b' },
 ];
 
-const renderActiveShape = (props) => {
+const holdings = [
+  { name: 'HDFC Bank', sector: 'Banking', alloc: 24, change: '+1.4%', up: true, spark: [14, 15, 13, 16, 16, 18, 17] },
+  { name: 'Infosys', sector: 'Technology', alloc: 19, change: '-0.6%', up: false, spark: [18, 17, 16, 15, 15, 14, 14] },
+  { name: 'Reliance Ind.', sector: 'Conglomerate', alloc: 17, change: '+0.9%', up: true, spark: [12, 13, 12, 14, 14, 15, 16] },
+  { name: 'TCS', sector: 'Technology', alloc: 14, change: '+0.3%', up: true, spark: [10, 10, 11, 11, 12, 12, 13] },
+  { name: 'Asian Paints', sector: 'Consumer', alloc: 11, change: '-1.1%', up: false, spark: [16, 15, 15, 14, 14, 13, 12] },
+];
+
+const NAV_LINKS = [
+  { label: 'Dashboard', href: '/dashboard', icon: LayoutGrid },
+  { label: 'Portfolio', href: '/portfolio', icon: LayoutGrid },
+  { label: 'Screener', href: '/screener', icon: Search },
+  { label: 'Analysis', href: '/analysis', icon: BarChart3 },
+  { label: 'Watchlist', href: '/watchlist', icon: Eye },
+];
+
+/* ─────────────────────────────────────────────
+   CURSOR HALO
+───────────────────────────────────────────── */
+
+function CursorHalo() {
+  const ref = useRef(null);
+  useEffect(() => {
+    const move = (e) => {
+      if (!ref.current) return;
+      ref.current.style.left = e.clientX + 'px';
+      ref.current.style.top = e.clientY + 'px';
+    };
+    window.addEventListener('mousemove', move);
+    return () => window.removeEventListener('mousemove', move);
+  }, []);
+  return <div ref={ref} className="cursor-halo" />;
+}
+
+/* ─────────────────────────────────────────────
+   NAVBAR
+───────────────────────────────────────────── */
+
+function Navbar() {
+  const [scrolled, setScrolled] = useState(false);
+  const currentPath = '/dashboard';
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  return (
+    <nav
+      className={`sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-slate-200 transition-shadow duration-200 ${
+        scrolled ? 'shadow-sm' : ''
+      }`}
+    >
+      <div className="max-w-7xl mx-auto px-6 md:px-8 h-16 flex items-center justify-between">
+        {/* Logo */}
+        <Link href="/" className="flex items-center gap-2 select-none">
+          <div className="w-7 h-7 rounded bg-[#1e3a8a] flex items-center justify-center">
+            <span className="text-white text-sm font-bold">R</span>
+          </div>
+          <span className="text-[#0f172a] font-semibold text-lg tracking-tight">Rupeexo</span>
+        </Link>
+
+        {/* Center Nav */}
+        <div className="hidden md:flex items-center gap-1">
+          {NAV_LINKS.map((link) => {
+            const isActive = link.href === currentPath;
+            return (
+              <Link
+                key={link.label}
+                href={link.href}
+                className={`relative px-4 py-2 rounded-md text-sm transition-all duration-150 ${
+                  isActive
+                    ? 'text-[#1e3a8a] bg-blue-50 font-medium'
+                    : 'text-slate-500 hover:text-[#1e3a8a] hover:bg-slate-50'
+                }`}
+              >
+                {link.label}
+                {isActive && (
+                  <span className="absolute bottom-0 left-4 right-4 h-[1.5px] bg-[#2563eb] rounded-full" />
+                )}
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* Right Actions */}
+        <div className="flex items-center gap-3">
+          <button className="relative w-9 h-9 flex items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 transition-all duration-150">
+            <Bell className="w-4 h-4" />
+            <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-[#2563eb]" />
+          </button>
+          <div className="w-9 h-9 rounded-lg bg-[#1e3a8a] flex items-center justify-center">
+            <span className="text-white text-sm font-semibold">A</span>
+          </div>
+        </div>
+      </div>
+    </nav>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   KPI CARD
+───────────────────────────────────────────── */
+
+function KPICard({ label, value, sub, subUp, trend, accent }) {
+  return (
+    <div className="card-hover border border-slate-200 rounded-xl bg-white p-6 flex flex-col gap-3">
+      <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-[0.13em]">{label}</p>
+      <div>
+        <p
+          className={`text-2xl font-semibold tracking-tight ${
+            accent === 'green'
+              ? 'text-emerald-600'
+              : accent === 'blue'
+              ? 'text-[#1e3a8a]'
+              : accent === 'red'
+              ? 'text-red-500'
+              : 'text-[#0f172a]'
+          }`}
+        >
+          {value}
+        </p>
+        {sub && (
+          <div className="flex items-center gap-1.5 mt-1.5">
+            {subUp === true && <ArrowUpRight className="w-3 h-3 text-emerald-500" />}
+            {subUp === false && <ArrowDownRight className="w-3 h-3 text-red-400" />}
+            <p className="text-xs text-slate-400">{sub}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   CUSTOM TOOLTIP
+───────────────────────────────────────────── */
+
+function CustomTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null;
+  const val = payload[0]?.value;
+  return (
+    <div className="border border-slate-200 bg-white rounded-xl px-4 py-3 shadow-md text-sm">
+      <p className="text-slate-400 text-xs mb-1">{label}</p>
+      <p className="font-semibold text-[#0f172a]">
+        ₹{val?.toLocaleString('en-IN')}
+      </p>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   ACTIVE PIE SHAPE
+───────────────────────────────────────────── */
+
+function ActiveShape(props) {
   const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } = props;
   return (
     <g>
-      <Sector cx={cx} cy={cy} innerRadius={innerRadius} outerRadius={outerRadius + 12} startAngle={startAngle} endAngle={endAngle} fill={fill} cornerRadius={16} />
-      <Sector cx={cx} cy={cy} innerRadius={innerRadius - 4} outerRadius={innerRadius} startAngle={startAngle} endAngle={endAngle} fill={fill} opacity={0.3} />
+      <Sector
+        cx={cx}
+        cy={cy}
+        innerRadius={innerRadius}
+        outerRadius={outerRadius + 8}
+        startAngle={startAngle}
+        endAngle={endAngle}
+        fill={fill}
+        cornerRadius={6}
+      />
     </g>
   );
-};
+}
+
+/* ─────────────────────────────────────────────
+   QUICK ACTION TILE
+───────────────────────────────────────────── */
+
+function ActionTile({ href, Icon, label, description }) {
+  return (
+    <Link href={href} className="group block">
+      <div className="card-hover border border-slate-200 rounded-xl bg-white p-5 flex items-center gap-4 transition-all duration-200">
+        <div className="w-10 h-10 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center text-[#1e3a8a] shrink-0">
+          <Icon className="w-5 h-5" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-[#0f172a]">{label}</p>
+          <p className="text-xs text-slate-400 truncate">{description}</p>
+        </div>
+        <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-[#2563eb] transition-colors duration-150" />
+      </div>
+    </Link>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   SECTION LABEL
+───────────────────────────────────────────── */
+
+function SectionLabel({ children }) {
+  return (
+    <p className="text-[11px] font-semibold text-[#2563eb] uppercase tracking-[0.14em] mb-1">
+      {children}
+    </p>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   MAIN DASHBOARD PAGE
+───────────────────────────────────────────── */
 
 export default function Dashboard() {
-  const [isIntro, setIsIntro] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [activeIndex, setActiveIndex] = useState(null);
-  const userName = "Abhishek"; 
+  const [lastUpdated] = useState('4 min ago');
+  const userName = 'Abhishek';
 
   useEffect(() => {
     setMounted(true);
-    const timer = setTimeout(() => setIsIntro(false), 2600);
-    return () => clearTimeout(timer);
   }, []);
 
-  const formatCurrency = (val) => mounted ? `₹${val.toLocaleString('en-IN')}` : "";
+  const fmt = (val) =>
+    mounted ? `₹${Number(val).toLocaleString('en-IN')}` : '';
 
   return (
-    <div className="min-h-screen bg-[#F8F9FF] text-slate-900 overflow-x-hidden font-sans selection:bg-indigo-100">
-      
-      {/* --- AMBIENT LIQUID BACKGROUND --- */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className={`absolute top-[-10%] right-[-5%] w-[60%] h-[60%] bg-indigo-200/30 blur-[140px] rounded-full transition-all duration-1000 ${isIntro ? 'scale-150' : 'scale-100'}`} />
-        <div className="absolute bottom-[-10%] left-[-5%] w-[40%] h-[40%] bg-indigo-50/50 blur-[120px] rounded-full" />
-      </div>
+    <>
+      <style>{`
+        html { scroll-behavior: smooth; }
 
-      <div className="relative max-w-7xl mx-auto p-6 md:p-12 lg:p-16">
-        
-        {/* --- DYNAMIC HEADER --- */}
-        <header className="relative z-50">
-          
-          {/* --- BRAND LOGO (MATCHED COLOR) --- */}
-          <div className="absolute top-0 left-0 flex items-center gap-3 group cursor-pointer">
-            <div className="relative">
-              <div className="absolute inset-0 bg-indigo-600 blur-lg opacity-40 group-hover:opacity-60 transition-opacity" />
-              <div className="relative h-11 w-11 bg-indigo-600 rounded-xl flex items-center justify-center transform group-hover:rotate-[10deg] transition-transform duration-500 shadow-lg shadow-indigo-200">
-                <span className="text-white font-black text-xl">R</span>
-              </div>
+        .page-enter {
+          animation: pageEnter 700ms cubic-bezier(0.22,1,0.36,1) both;
+        }
+
+        @keyframes pageEnter {
+          0% { opacity: 0; transform: translateY(10px); filter: blur(4px); }
+          100% { opacity: 1; transform: translateY(0); filter: blur(0); }
+        }
+
+        .fade-up {
+          opacity: 0;
+          transform: translateY(16px);
+          animation: fadeUp 600ms cubic-bezier(0.22,1,0.36,1) forwards;
+        }
+
+        @keyframes fadeUp {
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        .delay-1 { animation-delay: 60ms; }
+        .delay-2 { animation-delay: 120ms; }
+        .delay-3 { animation-delay: 180ms; }
+        .delay-4 { animation-delay: 240ms; }
+        .delay-5 { animation-delay: 300ms; }
+        .delay-6 { animation-delay: 360ms; }
+
+        .card-hover {
+          transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+        }
+        .card-hover:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px rgba(15,23,42,0.08);
+          border-color: #cbd5e1;
+        }
+
+        .cursor-halo {
+          position: fixed;
+          width: 320px;
+          height: 320px;
+          pointer-events: none;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(37,99,235,0.05) 0%, rgba(37,99,235,0.025) 45%, transparent 70%);
+          filter: blur(20px);
+          transform: translate(-50%, -50%);
+          z-index: 0;
+          transition: opacity 0.3s ease;
+        }
+
+        .recharts-cartesian-axis-tick text {
+          fill: #94a3b8;
+          font-size: 11px;
+        }
+      `}</style>
+
+      <div className="page-enter min-h-screen bg-[#f8fafc] text-[#0f172a] font-sans antialiased">
+        <CursorHalo />
+        <Navbar />
+
+        <div className="relative max-w-7xl mx-auto px-6 md:px-8 py-10 space-y-10">
+
+          {/* ── WELCOME HEADER ── */}
+          <header className="fade-up delay-1 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+            <div>
+              <SectionLabel>Portfolio Intelligence</SectionLabel>
+              <h1 className="text-3xl md:text-4xl font-semibold text-[#0f172a] tracking-tight leading-tight">
+                Welcome back, {userName}
+              </h1>
+              <p className="mt-1.5 text-sm text-slate-400">
+                Your portfolio intelligence overview for today.
+              </p>
             </div>
-            <span className="text-2xl font-black tracking-tighter text-[#1e1b4b]">Rupeexo</span>
+            <div className="flex items-center gap-2 text-xs text-slate-400 border border-slate-200 bg-white rounded-lg px-3.5 py-2 shrink-0 self-start sm:self-auto">
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span>Updated {lastUpdated}</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 ml-1" />
+            </div>
+          </header>
+
+          {/* ── KPI CARDS ── */}
+          <div className="fade-up delay-2 grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <KPICard
+              label="Total Portfolio Value"
+              value={fmt(1843620)}
+              sub="+₹6.03L growth (YTD)"
+              subUp={true}
+              accent="default"
+            />
+            <KPICard
+              label="Portfolio XIRR"
+              value="14.82%"
+              sub="vs 12.1% Nifty 50"
+              subUp={true}
+              accent="blue"
+            />
+            <KPICard
+              label="Unrealised P&L"
+              value="+48.62%"
+              sub="Lifetime unrealised"
+              subUp={true}
+              accent="green"
+            />
+            <KPICard
+              label="Risk Score"
+              value="Moderate"
+              sub="62 / 100 — stable"
+              accent="default"
+            />
           </div>
 
-          <div className={`transition-all duration-[1200ms] cubic-bezier(0.19, 1, 0.22, 1) flex flex-col 
-            ${isIntro ? 'items-center justify-center min-h-[80vh] text-center' : 'items-start justify-start min-h-0 mb-20 mt-20'}`}>
-            
-            <div className={`flex items-center gap-3 mb-8 transition-all duration-700 ${isIntro ? 'opacity-100' : 'opacity-0 -translate-y-10 pointer-events-none'}`}>
-              <div className="p-3 bg-white shadow-xl rounded-2xl">
-                <ShieldCheck className="w-6 h-6 text-indigo-600" />
-              </div>
-              <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Institutional Grade Security</p>
-            </div>
+          {/* ── CHARTS ROW ── */}
+          <div className="fade-up delay-3 grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-            <h1 className={`tracking-tighter transition-all duration-1000 leading-[0.85]
-                ${isIntro ? 'text-7xl md:text-[9rem]' : 'text-5xl md:text-7xl'}`}>
-                <span className="font-light text-slate-300 italic">Welcome,</span>
-                <br />
-                <span className="font-black text-[#1e1b4b] relative">
-                  {userName}
-                  {!isIntro && <span className="inline-block w-3 h-3 bg-emerald-500 rounded-full ml-4 animate-ping" />}
-                </span>
-            </h1>
-          </div>
-
-          {!isIntro && (
-            <div className="absolute top-0 right-0 flex items-center gap-6 animate-in fade-in slide-in-from-right-10 duration-1000 mt-2">
-               <div className="hidden md:flex gap-8 text-[11px] font-black uppercase tracking-widest text-slate-400">
-                  <span className="hover:text-indigo-600 cursor-pointer transition-colors">Insights</span>
-                  <span className="hover:text-indigo-600 cursor-pointer transition-colors">Taxation</span>
-                  <span className="text-[#1e1b4b] border-b-2 border-indigo-600 pb-1">Overview</span>
-               </div>
-               <div className="h-12 w-12 bg-[#1e1b4b] text-white rounded-2xl flex items-center justify-center font-black shadow-xl rotate-3 hover:rotate-0 transition-transform cursor-pointer">
-                 {userName[0]}
-               </div>
-            </div>
-          )}
-        </header>
-
-        {/* --- MAIN DASHBOARD --- */}
-        <main className={`transition-all duration-[1500ms] ${isIntro ? 'opacity-0 translate-y-20 blur-xl pointer-events-none' : 'opacity-100 translate-y-0'}`}>
-          
-          {/* STATS ROW */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-16">
-            <div className="md:col-span-2 bg-[#4f46e5] p-10 rounded-[3rem] text-white shadow-2xl shadow-indigo-200 relative overflow-hidden group">
-               <Zap className="absolute right-[-20px] bottom-[-20px] w-64 h-64 text-white/10 rotate-12 group-hover:rotate-45 transition-transform duration-1000" />
-               <p className="text-indigo-100 text-xs font-bold uppercase tracking-widest mb-4">Total Wealth Portfolio</p>
-               <h2 className="text-5xl font-black tracking-tighter mb-6">{formatCurrency(1843620)}</h2>
-               <div className="bg-white/20 backdrop-blur-md px-4 py-2 rounded-xl inline-flex items-center gap-2">
-                 <TrendingUp className="w-4 h-4 text-emerald-300" />
-                 <span className="text-sm font-bold">+₹6.03L Growth</span>
-               </div>
-            </div>
-            
-            {[
-              { label: "Profit & Loss", val: "+48.62%", sub: "Lifetime Unrealized", color: "text-emerald-600" },
-              { label: "Growth Velocity", val: "14.82%", sub: "CAGR Real-time", color: "text-indigo-600" },
-            ].map((stat, i) => (
-              <div key={i} className="bg-white border border-slate-100 p-10 rounded-[3rem] shadow-sm flex flex-col justify-center hover:shadow-xl transition-shadow group">
-                <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] mb-4">{stat.label}</p>
-                <h3 className={`text-4xl font-black tracking-tighter ${stat.color} group-hover:scale-105 transition-transform`}>{stat.val}</h3>
-                <p className="text-slate-400 text-xs mt-2 font-medium">{stat.sub}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 mb-16 items-stretch">
-            {/* PERFORMANCE AREA */}
-            <div className="lg:col-span-2 flex flex-col h-full">
-              <div className="flex justify-between items-end mb-8">
+            {/* Performance Chart */}
+            <div className="lg:col-span-2 border border-slate-200 rounded-xl bg-white p-6">
+              <div className="flex items-start justify-between mb-6">
                 <div>
-                  <h3 className="text-2xl font-black tracking-tight text-[#1e1b4b]">Portfolio Trajectory</h3>
-                  <p className="text-slate-400 text-sm">Value progression over the last 6 months</p>
+                  <SectionLabel>Performance</SectionLabel>
+                  <h2 className="text-lg font-semibold text-[#0f172a]">Portfolio Growth</h2>
                 </div>
-                <button className="text-xs font-black text-indigo-600 flex items-center gap-1 group">
-                  Detailed Analytics <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </button>
+                <div className="flex items-center gap-1.5 border border-slate-200 rounded-lg px-3 py-1.5">
+                  <TrendingUp className="w-3.5 h-3.5 text-emerald-500" />
+                  <span className="text-xs font-medium text-emerald-600">+48.6%</span>
+                </div>
               </div>
-              
-              <div className="flex-1 w-full bg-white border border-slate-50 p-8 rounded-[3rem] shadow-sm min-h-[500px]">
+              <div className="h-[260px]">
                 {mounted && (
-                <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={performanceData} margin={{ top: 20, right: 20, bottom: 20, left: 0 }}>
-                    <defs>
-                      <linearGradient id="mainVal" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.2}/>
-                        <stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="8 8" vertical={false} stroke="#f1f5f9" />
-                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12, fontWeight: 700}} dy={15} />
-                    <YAxis hide domain={['auto', 'auto']} />
-                    <Tooltip 
-                        contentStyle={{ borderRadius: '24px', border: 'none', boxShadow: '0 20px 40px rgba(0,0,0,0.08)', padding: '20px' }} 
-                        formatter={(value) => [formatCurrency(value), "Net Portfolio"]}
-                    />
-                    <Area type="natural" dataKey="value" stroke="#4f46e5" strokeWidth={6} fill="url(#mainVal)" />
-                    <Area type="natural" dataKey="profit" stroke="#10b981" strokeWidth={2} fill="#10b981" fillOpacity={0.03} />
-                  </ComposedChart>
-                </ResponsiveContainer>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <ComposedChart data={performanceData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#2563eb" stopOpacity={0.12} />
+                          <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="6 6" vertical={false} stroke="#f1f5f9" />
+                      <XAxis dataKey="date" axisLine={false} tickLine={false} dy={8} />
+                      <YAxis hide />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Area
+                        type="monotone"
+                        dataKey="value"
+                        stroke="#2563eb"
+                        strokeWidth={2}
+                        fill="url(#areaGrad)"
+                        dot={false}
+                        activeDot={{ r: 4, fill: '#2563eb', strokeWidth: 0 }}
+                      />
+                    </ComposedChart>
+                  </ResponsiveContainer>
                 )}
               </div>
             </div>
 
-            {/* ASSET DISTRIBUTION */}
-            <div className="bg-white border border-slate-100 p-10 rounded-[3rem] shadow-sm flex flex-col h-full">
-              <h3 className="text-xl font-black tracking-tight mb-8 text-[#1e1b4b]">Asset Diversification</h3>
-              <div className="w-full h-[240px] relative mb-10">
-                {mounted && (
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie 
-                      activeIndex={activeIndex} activeShape={renderActiveShape}
-                      data={allocationData} cx="50%" cy="50%" innerRadius={70} outerRadius={90} paddingAngle={10} 
-                      dataKey="percentage" onMouseEnter={(_, i) => setActiveIndex(i)} onMouseLeave={() => setActiveIndex(null)}
-                      stroke="none"
-                    >
-                      {allocationData.map((entry, index) => <Cell key={index} fill={entry.color} />)}
-                    </Pie>
-                  </PieChart>
-                </ResponsiveContainer>
-                )}
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <span className="text-4xl font-black text-[#1e1b4b] leading-none">
-                      {activeIndex !== null ? `${allocationData[activeIndex].percentage}%` : 'Mix'}
-                    </span>
-                    <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mt-2">
-                       {activeIndex !== null ? allocationData[activeIndex].name : 'Assets'}
-                    </span>
-                </div>
+            {/* Asset Allocation */}
+            <div className="border border-slate-200 rounded-xl bg-white p-6">
+              <div className="mb-4">
+                <SectionLabel>Allocation</SectionLabel>
+                <h2 className="text-lg font-semibold text-[#0f172a]">Asset Split</h2>
               </div>
-
-              <div className="space-y-3 flex-1">
-                {allocationData.map((asset, i) => (
-                  <div key={i} onMouseEnter={() => setActiveIndex(i)} onMouseLeave={() => setActiveIndex(null)}
-                    className={`flex items-center justify-between p-4 rounded-2xl transition-all duration-300 ${activeIndex === i ? 'bg-indigo-50/50 translate-x-2' : 'bg-transparent opacity-60'}`}>
-                    <div className="flex items-center gap-3">
-                      <div className="w-3 h-3 rounded-full" style={{backgroundColor: asset.color}} />
-                      <span className="text-xs font-black text-[#1e1b4b]">{asset.name}</span>
+              <div className="h-[160px]">
+                {mounted && (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={allocationData}
+                        innerRadius={52}
+                        outerRadius={70}
+                        dataKey="value"
+                        activeIndex={activeIndex}
+                        activeShape={ActiveShape}
+                        onMouseEnter={(_, i) => setActiveIndex(i)}
+                        onMouseLeave={() => setActiveIndex(null)}
+                        strokeWidth={0}
+                      >
+                        {allocationData.map((entry, i) => (
+                          <Cell key={i} fill={entry.color} />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+              <div className="mt-4 space-y-2">
+                {allocationData.map((item, i) => (
+                  <div key={i} className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
+                      <span className="text-slate-500">{item.name}</span>
                     </div>
-                    <span className="text-xs font-bold text-slate-400">{formatCurrency(asset.value)}</span>
+                    <span className="font-medium text-slate-700">{item.value}%</span>
                   </div>
                 ))}
               </div>
             </div>
           </div>
 
-          {/* UTILITY TILES */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-        {[
-          { id: "portfolio", t: "Portfolio", i: LayoutGrid, c: "bg-indigo-50 text-indigo-600" },
-          { id: "screener", t: "Screener", i: Search, c: "bg-emerald-50 text-emerald-600" },
-          { id: "analysis", t: "Analysis", i: BarChart3, c: "bg-orange-50 text-orange-600" },
-          { id: "watchlist", t: "Watchlist", i: Eye, c: "bg-indigo-50 text-indigo-600" },
-        ].map((item, idx) => (
-          /* This Link tag makes the whole tile clickable to a new URL */
-          <Link href={`/${item.id}`} key={idx} className="group block">
-            <div className="bg-white border border-slate-100 p-8 rounded-[2.5rem] flex flex-col gap-6 transition-all duration-500 hover:-translate-y-3 hover:shadow-2xl shadow-sm h-full cursor-pointer">
-              <div className={`w-14 h-14 ${item.c} rounded-2xl flex items-center justify-center transition-all group-hover:scale-110 group-hover:rotate-6`}>
-                  <item.i className="w-6 h-6" />
+          {/* ── HOLDINGS + AI INSIGHT ── */}
+          <div className="fade-up delay-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            {/* Top Holdings */}
+            <div className="lg:col-span-2 border border-slate-200 rounded-xl bg-white overflow-hidden">
+              <div className="border-b border-slate-100 bg-slate-50 px-5 py-3.5 flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Top Holdings</p>
+                </div>
+                <Link href="/portfolio" className="text-xs text-[#2563eb] hover:underline font-medium">
+                  View all →
+                </Link>
               </div>
-              <div className="space-y-1">
-                  <span className="text-lg font-black text-[#1e1b4b] tracking-tight">{item.t}</span>
-                  <div className="flex items-center gap-2 opacity-60">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">View Section</span>
-                    <ChevronRight className="w-3 h-3 text-slate-400 group-hover:translate-x-1 transition-transform" />
+              {/* Table Header */}
+              <div className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-4 px-5 py-2.5 border-b border-slate-50">
+                {['Company', 'Trend', 'Alloc.', 'Change'].map((h, i) => (
+                  <p key={h} className={`text-[10px] text-slate-400 font-semibold uppercase tracking-wider ${i > 0 ? 'text-right' : ''}`}>{h}</p>
+                ))}
+              </div>
+              {holdings.map((h, i) => (
+                <div
+                  key={h.name}
+                  className={`grid grid-cols-[1fr_auto_auto_auto] items-center gap-4 px-5 py-3.5 ${
+                    i < holdings.length - 1 ? 'border-b border-slate-50' : ''
+                  } hover:bg-slate-50 transition-colors duration-100`}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0">
+                      <span className="text-[11px] font-bold text-slate-500">{h.name[0]}</span>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-[#0f172a] truncate">{h.name}</p>
+                      <p className="text-[11px] text-slate-400">{h.sector}</p>
+                    </div>
                   </div>
-              </div>
-              {/* Subtle indigo accent at bottom on hover */}
-              <div className="absolute bottom-0 left-0 w-0 h-1 bg-indigo-600 group-hover:w-full transition-all duration-700 opacity-20" />
+                  <MiniSparkline values={h.spark} color={h.up ? '#10b981' : '#ef4444'} />
+                  <p className="text-sm text-slate-500 text-right">{h.alloc}%</p>
+                  <p className={`text-sm font-medium text-right ${h.up ? 'text-emerald-600' : 'text-red-500'}`}>
+                    {h.change}
+                  </p>
+                </div>
+              ))}
             </div>
-          </Link>
-        ))}
+
+            {/* AI Insight + Risk */}
+            <div className="flex flex-col gap-4">
+              {/* AI Strip */}
+              <div className="border border-blue-100 bg-blue-50 rounded-xl px-5 py-4 flex-1">
+                <div className="flex items-start gap-3">
+                  <span className="text-[#2563eb] mt-0.5 text-base shrink-0">◈</span>
+                  <div>
+                    <p className="text-[11px] font-semibold text-blue-800 uppercase tracking-wider mb-2">AI Summary</p>
+                    <p className="text-sm text-blue-700 leading-relaxed">
+                      Portfolio is overweight technology relative to Nifty 50. HDFC Bank NIM compression flagged in Q3 filing — suggest reviewing allocation before Q4 earnings cycle.
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-4 pt-3 border-t border-blue-100">
+                  <p className="text-[11px] text-blue-500 font-medium uppercase tracking-wider mb-2">Risk Indicators</p>
+                  {[
+                    { label: 'Concentration Risk', level: 'Medium', pct: 62, color: 'bg-amber-400' },
+                    { label: 'Valuation Risk', level: 'High', pct: 78, color: 'bg-red-400' },
+                    { label: 'Sector Overlap', level: 'Low', pct: 28, color: 'bg-emerald-400' },
+                  ].map((r) => (
+                    <div key={r.label} className="mb-2.5">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-[11px] text-blue-700">{r.label}</span>
+                        <span className="text-[10px] text-blue-500">{r.level}</span>
+                      </div>
+                      <div className="h-1 bg-blue-100 rounded-full overflow-hidden">
+                        <div className={`h-full rounded-full ${r.color}`} style={{ width: `${r.pct}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Verified badge */}
+              <div className="border border-slate-200 rounded-xl bg-white px-4 py-3.5 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 text-sm shrink-0">
+                  ✓
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-slate-700">All fundamentals verified</p>
+                  <p className="text-[11px] text-slate-400">BSE / NSE · Updated {lastUpdated}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ── QUICK ACTIONS ── */}
+          <div className="fade-up delay-5">
+            <div className="mb-4">
+              <SectionLabel>Navigate</SectionLabel>
+              <h2 className="text-lg font-semibold text-[#0f172a]">Quick Actions</h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {[
+                {
+                  href: '/portfolio',
+                  Icon: LayoutGrid,
+                  label: 'Portfolio',
+                  description: 'Holdings, allocation & XIRR',
+                },
+                {
+                  href: '/screener',
+                  Icon: Search,
+                  label: 'Screener',
+                  description: 'Filter stocks by fundamentals',
+                },
+                {
+                  href: '/analysis',
+                  Icon: BarChart3,
+                  label: 'Analysis',
+                  description: 'Ratios, margins & growth trends',
+                },
+                {
+                  href: '/watchlist',
+                  Icon: Eye,
+                  label: 'Watchlist',
+                  description: 'Track companies of interest',
+                },
+              ].map((tile) => (
+                <ActionTile key={tile.label} {...tile} />
+              ))}
+            </div>
+          </div>
+
+          {/* ── FOOTER DISCLAIMER ── */}
+          <div className="fade-up delay-6 border-t border-slate-200 pt-8 pb-4">
+            <p className="text-xs text-slate-400 leading-relaxed text-center max-w-3xl mx-auto">
+              Rupeexo is a financial information and analytics platform. We are not a SEBI-registered investment adviser, research analyst, or broker. All data, analytics, and AI-generated interpretations are provided strictly for informational and educational purposes. Users are solely responsible for their investment decisions.
+            </p>
+          </div>
+        </div>
       </div>
-        </main>
-      </div>
-    </div>
+    </>
   );
 }
