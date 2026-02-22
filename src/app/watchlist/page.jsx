@@ -723,12 +723,12 @@ function WatchlistTab({ list, isActive, onClick, onRename, onDelete, canDelete }
 
   return (
     <div
-      className={`group relative flex items-center gap-2 px-4 py-2.5 rounded-lg cursor-pointer transition-all duration-150 ${
+      className={`group relative flex items-center gap-1.5 px-2 sm:px-3 py-2 rounded-lg cursor-pointer transition-all duration-150 min-w-0 flex-1 sm:flex-none ${
         isActive ? 'bg-white border border-slate-200 shadow-sm text-[#1e3a8a]' : 'text-slate-500 hover:bg-white/60 hover:text-slate-700'
       }`}
       onClick={() => { if (!editing) onClick(); }}
     >
-      <Star className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-[#2563eb]' : 'text-slate-300'}`} />
+      <Star className={`w-3 h-3 shrink-0 ${isActive ? 'text-[#2563eb]' : 'text-slate-300'}`} />
 
       {editing ? (
         <input
@@ -738,10 +738,10 @@ function WatchlistTab({ list, isActive, onClick, onRename, onDelete, canDelete }
           onBlur={save}
           onKeyDown={(e) => { if (e.key === 'Enter') save(); if (e.key === 'Escape') { setDraft(list.name); setEditing(false); } }}
           onClick={(e) => e.stopPropagation()}
-          className="flex-1 text-sm font-medium bg-transparent outline-none min-w-0 w-24 border-b border-[#2563eb]"
+          className="flex-1 text-xs sm:text-sm font-medium bg-transparent outline-none min-w-0 w-16 sm:w-24 border-b border-[#2563eb]"
         />
       ) : (
-        <span className="text-sm font-medium whitespace-nowrap">{list.name}</span>
+        <span className="text-xs sm:text-sm font-medium truncate max-w-[70px] sm:max-w-[120px]">{list.name}</span>
       )}
 
       <span className="text-[10px] font-semibold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full shrink-0">
@@ -750,7 +750,7 @@ function WatchlistTab({ list, isActive, onClick, onRename, onDelete, canDelete }
 
       {/* Edit/delete controls — show on hover when active */}
       {isActive && !editing && (
-        <div className="hidden group-hover:flex items-center gap-1 ml-0.5">
+        <div className="hidden group-hover:flex items-center gap-1">
           <button
             onClick={(e) => { e.stopPropagation(); setDraft(list.name); setEditing(true); }}
             className="w-5 h-5 flex items-center justify-center rounded text-slate-400 hover:text-[#2563eb] hover:bg-blue-50 transition-all duration-150"
@@ -973,39 +973,44 @@ export default function WatchlistPage() {
             <div className="border border-slate-200 rounded-xl bg-white overflow-hidden">
 
               {/* Watchlist tabs + create button */}
-              <div className="px-4 pt-4 pb-3 border-b border-slate-100">
-                <div className="flex items-center gap-2 bg-slate-50 rounded-xl p-1.5">
-                  {watchlists.map((list) => (
-                    <WatchlistTab
-                      key={list.id}
-                      list={list}
-                      isActive={list.id === activeListId}
-                      onClick={() => { setActiveListId(list.id); setSelected(null); }}
-                      onRename={(name) => handleRenameList(list.id, name)}
-                      onDelete={() => handleDeleteList(list.id)}
-                      canDelete={watchlists.length > 1}
-                    />
-                  ))}
+              <div className="px-3 sm:px-4 pt-4 pb-3 border-b border-slate-100">
+                <div className="flex items-center gap-1.5 bg-slate-50 rounded-xl p-1.5 min-w-0">
 
-                  {/* Create new watchlist */}
+                  {/* Tabs */}
+                  <div className="flex items-center gap-1 flex-1 min-w-0 overflow-hidden">
+                    {watchlists.map((list) => (
+                      <WatchlistTab
+                        key={list.id}
+                        list={list}
+                        isActive={list.id === activeListId}
+                        onClick={() => { setActiveListId(list.id); setSelected(null); }}
+                        onRename={(name) => handleRenameList(list.id, name)}
+                        onDelete={() => handleDeleteList(list.id)}
+                        canDelete={watchlists.length > 1}
+                      />
+                    ))}
+                  </div>
+
+                  {/* New / Upgrade — always icon-only, no text ever */}
                   <button
                     onClick={handleCreateList}
-                    className={`ml-auto flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-150 shrink-0 ${
-                      watchlists.length >= MAX_FREE_WATCHLISTS
+                    title={watchlists.length >= MAX_FREE_WATCHLISTS ? 'Upgrade to Pro' : 'New watchlist'}
+                    className={`shrink-0 w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-150
+                      ${watchlists.length >= MAX_FREE_WATCHLISTS
                         ? 'text-amber-600 bg-amber-50 border border-amber-200 hover:bg-amber-100'
                         : 'text-slate-500 hover:text-[#1e3a8a] hover:bg-white border border-transparent hover:border-slate-200'
-                    }`}
+                      }`}
                   >
                     {watchlists.length >= MAX_FREE_WATCHLISTS
-                      ? <><Lock className="w-3 h-3" /> Upgrade</>
-                      : <><Plus className="w-3 h-3" /> New</>}
+                      ? <Crown className="w-3.5 h-3.5" />
+                      : <Plus  className="w-3.5 h-3.5" />}
                   </button>
                 </div>
 
                 {/* Active list search + info row */}
-                <div className="flex items-center justify-between mt-3">
-                  <p className="text-[11px] text-slate-400">
-                    <span className="font-semibold text-slate-600">{activeStocks.length}</span> stocks in this list
+                <div className="flex items-center justify-between mt-3 gap-2">
+                  <p className="text-[11px] text-slate-400 shrink-0">
+                    <span className="font-semibold text-slate-600">{activeStocks.length}</span> stocks
                   </p>
                   <StockSearch onAdd={handleAddStock} usedSymbols={usedSymbols} />
                 </div>
