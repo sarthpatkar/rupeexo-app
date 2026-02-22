@@ -4,7 +4,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '../../lib/supabase/client';
 import {
   LayoutGrid,
   Search,
@@ -34,10 +34,7 @@ import {
   Sector,
 } from 'recharts';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+const supabase = createClient();
 
 /* ─────────────────────────────────────────────
    SPARKLINE
@@ -126,6 +123,13 @@ function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
   const currentPath = pathname;
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.replace('/login');
+  };
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -173,6 +177,12 @@ function Navbar() {
 
         {/* Right Actions */}
         <div className="flex items-center gap-3">
+          <button
+            onClick={handleLogout}
+            className="px-3 py-1.5 text-xs font-medium border border-slate-200 rounded-lg bg-white hover:bg-slate-50 text-slate-600 transition"
+          >
+            Logout
+          </button>
           <button className="relative w-9 h-9 flex items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 transition-all duration-150">
             <Bell className="w-4 h-4" />
             <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-[#2563eb]" />
@@ -309,40 +319,56 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    const initAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+    const supabase = createClient();
 
-      if (!session) {
-        router.replace('/login');
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession();
+
+      if (!data.session) {
+        router.replace("/login");
         return;
       }
 
-      const user = session.user;
+      const user = data.session.user;
 
-      // Fetch profile name if exists
-      let name = '';
       const { data: profile } = await supabase
-        .from('profiles')
-        .select('full_name')
-        .eq('id', user.id)
+        .from("profiles")
+        .select("full_name")
+        .eq("id", user.id)
         .single();
 
-      name =
+      const name =
         profile?.full_name ||
         user.user_metadata?.full_name ||
-        (user.email ? user.email.split('@')[0] : 'User');
+        (user.email ? user.email.split("@")[0] : "User");
 
       setUserName(name);
       setAuthChecked(true);
     };
 
-    initAuth();
+    checkSession();
+
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (!session) router.replace("/login");
+      }
+    );
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
   }, [router]);
 
   const fmt = (val) =>
     mounted ? `₹${Number(val).toLocaleString('en-IN')}` : '';
 
-  if (!authChecked) return null;
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#f8fafc]">
+        <p className="text-sm text-slate-500">Loading dashboard...</p>
+      </div>
+    );
+  }
 
   return (
     <>

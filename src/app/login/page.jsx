@@ -1,6 +1,6 @@
 "use client"
 import { createClient } from "../../lib/supabase/client"
-import { useState, useId } from "react"
+import { useState, useId, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
@@ -129,6 +129,34 @@ function validateForm(form) {
 
 export default function LoginPage() {
   const router = useRouter()
+  const supabase = createClient()
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      if (session?.user) {
+        router.replace("/dashboard")
+      }
+    }
+
+    checkSession()
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        router.replace("/dashboard")
+      }
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [router, supabase])
+
   const emailId = useId()
   const passwordId = useId()
   const rememberId = useId()
@@ -180,7 +208,7 @@ async function handleSubmit(e) {
 
   setIsLoading(true)
 
-  const supabase = createClient()
+  
 
   const { error } = await supabase.auth.signInWithPassword({
     email: form.email,
@@ -194,18 +222,31 @@ async function handleSubmit(e) {
     return
   }
 
-  router.push("/dashboard")
+  // Ensure session cookie is ready before redirect
+  await supabase.auth.getSession()
+
+  router.replace("/dashboard")
 }
 
   async function handleGoogleLogin() {
-    const supabase = createClient()
+    
 
-    await supabase.auth.signInWithOAuth({
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${location.origin}/dashboard`,
+        redirectTo: `${location.origin}/auth/callback`,
       },
     })
+
+    if (error) {
+      alert(error.message)
+      return
+    }
+
+    // Important: redirect browser to Supabase OAuth URL
+    if (data?.url) {
+      window.location.href = data.url
+    }
   }
 
   return (
