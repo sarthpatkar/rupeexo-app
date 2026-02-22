@@ -1,5 +1,5 @@
 "use client"
-
+import { createClient } from "../../lib/supabase/client"
 import { useState, useId } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -171,17 +171,41 @@ export default function LoginPage() {
     return undefined
   }
 
-  async function handleSubmit(e) {
-    e.preventDefault()
-    setSubmitted(true)
-    setErrors(currentErrors)
+async function handleSubmit(e) {
+  e.preventDefault()
+  setSubmitted(true)
+  setErrors(currentErrors)
 
-    if (!isValid) return
+  if (!isValid) return
 
-    setIsLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    setIsLoading(false)
-    // In production: call auth API here
+  setIsLoading(true)
+
+  const supabase = createClient()
+
+  const { error } = await supabase.auth.signInWithPassword({
+    email: form.email,
+    password: form.password,
+  })
+
+  setIsLoading(false)
+
+  if (error) {
+    alert(error.message)
+    return
+  }
+
+  router.push("/dashboard")
+}
+
+  async function handleGoogleLogin() {
+    const supabase = createClient()
+
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${location.origin}/auth/callback`,
+      },
+    })
   }
 
   return (
@@ -480,6 +504,7 @@ export default function LoginPage() {
               {/* ── Google Button ── */}
               <button
                 type="button"
+                onClick={handleGoogleLogin}
                 className="w-full rounded-md py-2.5 text-sm font-medium transition-colors flex items-center justify-center gap-2.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#2563eb]"
                 style={{
                   border: "1px solid #e2e8f0",

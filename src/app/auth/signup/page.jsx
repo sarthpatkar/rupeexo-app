@@ -1,6 +1,8 @@
 "use client"
 
 import { useState, useId } from "react"
+import { createClient } from "../../../lib/supabase/client"
+import { useRouter } from "next/navigation"
 
 // ─── Internal Helper Components ───────────────────────────────────────────────
 
@@ -255,6 +257,8 @@ export default function SignUpPage() {
   const isValid = Object.keys(currentErrors).length === 0
   const strength = getPasswordStrength(form.password)
 
+  const router = useRouter()
+
   function handleChange(e) {
     const { name, value, type, checked } = e.target
     setForm((prev) => ({
@@ -282,9 +286,38 @@ export default function SignUpPage() {
     if (!isValid) return
 
     setIsLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+
+    const supabase = createClient()
+
+    const { error } = await supabase.auth.signUp({
+      email: form.email,
+      password: form.password,
+      options: {
+        data: {
+          full_name: form.fullName,
+        },
+      },
+    })
+
     setIsLoading(false)
-    // In production: call registration API here
+
+    if (error) {
+      alert(error.message)
+      return
+    }
+
+    router.push("/dashboard")
+  }
+
+  async function handleGoogleLogin() {
+    const supabase = createClient()
+
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${location.origin}/auth/callback`,
+      },
+    })
   }
 
   const passwordRules = [
@@ -628,6 +661,7 @@ export default function SignUpPage() {
               {/* ── Google Button ── */}
               <button
                 type="button"
+                onClick={handleGoogleLogin}
                 className="w-full rounded-md py-2.5 text-sm font-medium flex items-center justify-center gap-2.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#2563eb]"
                 style={{
                   border: "1px solid #e2e8f0",
