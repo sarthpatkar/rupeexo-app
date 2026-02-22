@@ -91,10 +91,10 @@ const holdings = [
 
 const NAV_LINKS = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutGrid },
-  { label: 'Portfolio', href: '/dashboard/portfolio', icon: LayoutGrid },
-  { label: 'Screener', href: '/dashboard/screener', icon: Search },
-  { label: 'Analysis', href: '/dashboard/analysis', icon: BarChart3 },
-  { label: 'Watchlist', href: '/dashboard/watchlist', icon: Eye },
+  { label: 'Portfolio', href: '/portfolio', icon: LayoutGrid },
+  { label: 'Screener', href: '/screener', icon: Search },
+  { label: 'Analysis', href: '/analysis', icon: BarChart3 },
+  { label: 'Watchlist', href: '/watchlist', icon: Eye },
 ];
 
 /* ─────────────────────────────────────────────
@@ -580,7 +580,7 @@ export default function Dashboard() {
                 <div>
                   <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Top Holdings</p>
                 </div>
-                <Link href="/dashboard/portfolio" className="text-xs text-[#2563eb] hover:underline font-medium">
+                <Link href="/portfolio" className="text-xs text-[#2563eb] hover:underline font-medium">
                   View all →
                 </Link>
               </div>
@@ -670,25 +670,25 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {[
                 {
-                  href: '/dashboard/portfolio',
+                  href: '/portfolio',
                   Icon: LayoutGrid,
                   label: 'Portfolio',
                   description: 'Holdings, allocation & XIRR',
                 },
                 {
-                  href: '/dashboard/screener',
+                  href: '/screener',
                   Icon: Search,
                   label: 'Screener',
                   description: 'Filter stocks by fundamentals',
                 },
                 {
-                  href: '/dashboard/analysis',
+                  href: '/analysis',
                   Icon: BarChart3,
                   label: 'Analysis',
                   description: 'Ratios, margins & growth trends',
                 },
                 {
-                  href: '/dashboard/watchlist',
+                  href: '/watchlist',
                   Icon: Eye,
                   label: 'Watchlist',
                   description: 'Track companies of interest',

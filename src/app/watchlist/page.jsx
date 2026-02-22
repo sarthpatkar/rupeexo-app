@@ -857,9 +857,9 @@ export default function WatchlistPage() {
           <div className="fade-up delay-2 grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
               { label: 'Total Watching',  value: allWatchedStocks.length,  sub: 'across all lists',  subUp: null,  accent: 'default' },
-              { label: 'Watchlists',      value: watchlists.length,         sub: `${MAX_FREE_WATCHLISTS} on free plan`, subUp: null, accent: 'blue' },
-              { label: 'Gainers Today',   value: gainers,                   sub: 'stocks up',         subUp: true,  accent: 'green' },
-              { label: 'Losers Today',    value: losers,                    sub: 'stocks down',       subUp: false, accent: 'red' },
+              { label: 'Watchlists',      value: watchlists.length,        sub: `${MAX_FREE_WATCHLISTS} on free plan`, subUp: null, accent: 'blue' },
+              { label: 'Gainers Today',   value: gainers,                  sub: 'stocks up',         subUp: true,  accent: 'green' },
+              { label: 'Losers Today',    value: losers,                   sub: 'stocks down',       subUp: false, accent: 'red' },
             ].map((card) => (
               <div key={card.label} className="card-hover border border-slate-200 rounded-xl bg-white p-6 flex flex-col gap-3">
                 <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-[0.13em]">{card.label}</p>
