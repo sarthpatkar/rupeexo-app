@@ -34,12 +34,24 @@ export default function AiSummariesPage() {
 
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
-            className="md:hidden w-10 h-10 flex flex-col items-center justify-center gap-[5px] rounded-lg border border-slate-200 bg-white"
+            className="md:hidden w-9 h-9 flex flex-col items-center justify-center gap-[5px] rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-all duration-150"
             aria-label="Toggle menu"
           >
-            <span className={`block h-[2px] w-5 bg-slate-600 transition ${mobileOpen ? 'rotate-45 translate-y-[6px]' : ''}`} />
-            <span className={`block h-[2px] w-5 bg-slate-600 transition ${mobileOpen ? 'opacity-0' : ''}`} />
-            <span className={`block h-[2px] w-5 bg-slate-600 transition ${mobileOpen ? '-rotate-45 -translate-y-[6px]' : ''}`} />
+            <span
+              className={`block h-[1.5px] bg-slate-600 transition-all duration-200 origin-center ${
+                mobileOpen ? 'w-4 rotate-45 translate-y-[6.5px]' : 'w-5'
+              }`}
+            />
+            <span
+              className={`block h-[1.5px] bg-slate-600 transition-all duration-200 ${
+                mobileOpen ? 'opacity-0 w-0' : 'w-5'
+              }`}
+            />
+            <span
+              className={`block h-[1.5px] bg-slate-600 transition-all duration-200 origin-center ${
+                mobileOpen ? 'w-4 -rotate-45 -translate-y-[6.5px]' : 'w-5'
+              }`}
+            />
           </button>
         </div>
       </nav>

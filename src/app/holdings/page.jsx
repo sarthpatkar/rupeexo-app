@@ -82,13 +82,14 @@ export default function PortfolioPage() {
 
         <div className="ml-auto flex items-center gap-3">
           <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden w-10 h-10 flex flex-col items-center justify-center gap-[5px] rounded-lg border border-slate-200 bg-white"
+            id="hamburger-btn"
+            onClick={() => setMobileMenuOpen((o) => !o)}
+            className="md:hidden w-9 h-9 flex flex-col items-center justify-center gap-[5px] rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-all duration-150"
             aria-label="Toggle menu"
           >
-            <span className={`block h-[2px] w-5 bg-slate-600 transition ${mobileMenuOpen ? 'rotate-45 translate-y-[6px]' : ''}`} />
-            <span className={`block h-[2px] w-5 bg-slate-600 transition ${mobileMenuOpen ? 'opacity-0' : ''}`} />
-            <span className={`block h-[2px] w-5 bg-slate-600 transition ${mobileMenuOpen ? '-rotate-45 -translate-y-[6px]' : ''}`} />
+            <span className={`block h-[1.5px] bg-slate-600 transition-all duration-200 origin-center ${mobileMenuOpen ? 'w-4 rotate-45 translate-y-[6.5px]' : 'w-5'}`} />
+            <span className={`block h-[1.5px] bg-slate-600 transition-all duration-200 ${mobileMenuOpen ? 'opacity-0 w-0' : 'w-5'}`} />
+            <span className={`block h-[1.5px] bg-slate-600 transition-all duration-200 origin-center ${mobileMenuOpen ? 'w-4 -rotate-45 -translate-y-[6.5px]' : 'w-5'}`} />
           </button>
         </div>
       </nav>
@@ -108,7 +109,7 @@ export default function PortfolioPage() {
 
         {/* Mobile Sidebar */}
         {mobileMenuOpen && (
-          <div className="fixed inset-0 z-40 md:hidden">
+          <div id="mobile-menu" className="fixed inset-0 z-40 md:hidden">
             <div
               className="absolute inset-0 bg-black/30 backdrop-blur-sm"
               onClick={() => setMobileMenuOpen(false)}

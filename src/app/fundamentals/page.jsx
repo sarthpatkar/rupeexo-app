@@ -7,7 +7,7 @@ import { Bell, Menu, X } from 'lucide-react';
 
 export default function FundamentalsPage() {
   const pathname = usePathname();
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const TOP_NAV_LINKS = [
     { label: 'Dashboard', href: '/dashboard' },
@@ -37,13 +37,6 @@ export default function FundamentalsPage() {
       {/* ── NAVBAR (Matched small logo & responsive menu) ── */}
       <nav className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 md:px-8 shrink-0 z-50 relative">
         <div className="flex items-center gap-3">
-          <button 
-            onClick={() => setMobileOpen(!mobileOpen)}
-            className="md:hidden p-1.5 rounded-md hover:bg-slate-100 text-slate-600"
-          >
-            {mobileOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
-          
           <Link href="/" className="flex items-center gap-2 select-none">
             <div className="w-6 h-6 rounded bg-[#1e3a8a] flex items-center justify-center">
               <span className="text-white text-[10px] font-bold">R</span>
@@ -69,24 +62,18 @@ export default function FundamentalsPage() {
             <Bell className="w-4 h-4 text-slate-500" />
             <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-[#2563eb]" />
           </button>
-          <div className="w-9 h-9 rounded-lg bg-[#1e3a8a] flex items-center justify-center text-white text-sm font-semibold">A</div>
-        </div>
 
-        {/* Mobile Dropdown Menu */}
-        {mobileOpen && (
-          <div className="absolute top-16 left-0 w-full bg-white border-b border-slate-200 shadow-xl z-50 py-2 md:hidden">
-            {TOP_NAV_LINKS.map(({ label, href }) => (
-              <Link 
-                key={label} 
-                href={href} 
-                onClick={() => setMobileOpen(false)} 
-                className="block px-6 py-3 text-sm font-medium text-slate-600 hover:bg-blue-50"
-              >
-                {label}
-              </Link>
-            ))}
-          </div>
-        )}
+          {/* Hamburger — mobile only */}
+          <button
+            onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+            className="md:hidden w-9 h-9 flex flex-col items-center justify-center gap-[5px] rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-all duration-150"
+            aria-label="Toggle menu"
+          >
+            <span className={`block h-[1.5px] bg-slate-600 transition-all duration-200 origin-center ${mobileSidebarOpen ? 'w-4 rotate-45 translate-y-[6.5px]' : 'w-5'}`} />
+            <span className={`block h-[1.5px] bg-slate-600 transition-all duration-200 ${mobileSidebarOpen ? 'opacity-0 w-0' : 'w-5'}`} />
+            <span className={`block h-[1.5px] bg-slate-600 transition-all duration-200 origin-center ${mobileSidebarOpen ? 'w-4 -rotate-45 -translate-y-[6.5px]' : 'w-5'}`} />
+          </button>
+        </div>
       </nav>
 
       {/* ── BODY ── */}
@@ -122,21 +109,21 @@ export default function FundamentalsPage() {
         </aside>
 
         {/* Mobile Sidebar */}
-        {mobileOpen && (
+        {mobileSidebarOpen && (
           <div className="fixed inset-0 z-40 md:hidden">
             <div
               className="absolute inset-0 bg-black/30 backdrop-blur-sm"
-              onClick={() => setMobileOpen(false)}
+              onClick={() => setMobileSidebarOpen(false)}
             />
 
             <div className="absolute left-0 top-0 bottom-0 w-72 bg-white shadow-xl p-6 overflow-y-auto">
               <nav className="space-y-2">
-                <Link href="/portfolio" onClick={() => setMobileOpen(false)} className={navLinkClass('/portfolio')}>Overview</Link>
-                <Link href="/holdings" onClick={() => setMobileOpen(false)} className={navLinkClass('/holdings')}>Holdings</Link>
-                <Link href="/fundamentals" onClick={() => setMobileOpen(false)} className={navLinkClass('/fundamentals')}>Fundamentals</Link>
-                <Link href="/risk-monitor" onClick={() => setMobileOpen(false)} className={navLinkClass('/risk-monitor')}>Risk Monitor</Link>
-                <Link href="/ai-summaries" onClick={() => setMobileOpen(false)} className={navLinkClass('/ai-summaries')}>AI Summaries</Link>
-                <Link href="/watchlist" onClick={() => setMobileOpen(false)} className={navLinkClass('/watchlist')}>Watchlist</Link>
+                <Link href="/portfolio" onClick={() => setMobileSidebarOpen(false)} className={navLinkClass('/portfolio')}>Overview</Link>
+                <Link href="/holdings" onClick={() => setMobileSidebarOpen(false)} className={navLinkClass('/holdings')}>Holdings</Link>
+                <Link href="/fundamentals" onClick={() => setMobileSidebarOpen(false)} className={navLinkClass('/fundamentals')}>Fundamentals</Link>
+                <Link href="/risk-monitor" onClick={() => setMobileSidebarOpen(false)} className={navLinkClass('/risk-monitor')}>Risk Monitor</Link>
+                <Link href="/ai-summaries" onClick={() => setMobileSidebarOpen(false)} className={navLinkClass('/ai-summaries')}>AI Summaries</Link>
+                <Link href="/watchlist" onClick={() => setMobileSidebarOpen(false)} className={navLinkClass('/watchlist')}>Watchlist</Link>
               </nav>
             </div>
           </div>
