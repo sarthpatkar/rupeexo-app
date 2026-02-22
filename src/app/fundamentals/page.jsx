@@ -3,10 +3,28 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { Bell, Menu, X } from 'lucide-react';
 
 export default function FundamentalsPage() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const TOP_NAV_LINKS = [
+    { label: 'Dashboard', href: '/dashboard' },
+    { label: 'Portfolio', href: '/portfolio' },
+    { label: 'Screener',  href: '/screener'  },
+    { label: 'Analysis',  href: '/analysis'  },
+    { label: 'Watchlist', href: '/watchlist' },
+  ];
+
+  const SIDEBAR_LINKS = [
+    { label: 'Overview',     href: '/portfolio'    },
+    { label: 'Holdings',     href: '/holdings'     },
+    { label: 'Fundamentals', href: '/fundamentals' },
+    { label: 'Risk Monitor', href: '/risk-monitor' },
+    { label: 'AI Summaries', href: '/ai-summaries' },
+    { label: 'Watchlist',    href: '/watchlist'    },
+  ];
 
   const navLinkClass = (path) => 
     pathname === path
@@ -14,47 +32,74 @@ export default function FundamentalsPage() {
       : "block px-4 py-2.5 text-slate-500 hover:bg-slate-100 hover:text-slate-800 font-medium rounded-lg text-[13px] transition-colors";
 
   return (
-    <div className="flex flex-col h-screen bg-[#f8fafc] font-sans text-slate-800 overflow-hidden">
+    <div className="flex flex-col h-screen bg-[#f8fafc] font-sans text-slate-800 overflow-hidden relative">
       
-      {/* Navbar */}
-      <nav className="h-16 bg-white border-b border-slate-200 flex items-center px-8 shrink-0 z-10">
-        <Link href="/" className="flex items-center gap-2 select-none">
-          <div className="w-7 h-7 rounded bg-[#1e3a8a] flex items-center justify-center">
-            <span className="text-white text-sm font-bold">R</span>
-          </div>
-          <span className="text-[#0f172a] font-semibold text-lg tracking-tight">
-            Rupeexo
-          </span>
-        </Link>
-        <div className="ml-auto flex items-center gap-3">
-          <div className="hidden md:block text-sm font-medium text-slate-500">
-            app.rupeexo.com/fundamentals
-          </div>
-
-          <button
+      {/* ── NAVBAR (Matched small logo & responsive menu) ── */}
+      <nav className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 md:px-8 shrink-0 z-50 relative">
+        <div className="flex items-center gap-3">
+          <button 
             onClick={() => setMobileOpen(!mobileOpen)}
-            className="md:hidden w-10 h-10 flex flex-col items-center justify-center gap-[5px] rounded-lg border border-slate-200 bg-white"
-            aria-label="Toggle menu"
+            className="md:hidden p-1.5 rounded-md hover:bg-slate-100 text-slate-600"
           >
-            <span className={`block h-[2px] w-5 bg-slate-600 transition ${mobileOpen ? 'rotate-45 translate-y-[6px]' : ''}`} />
-            <span className={`block h-[2px] w-5 bg-slate-600 transition ${mobileOpen ? 'opacity-0' : ''}`} />
-            <span className={`block h-[2px] w-5 bg-slate-600 transition ${mobileOpen ? '-rotate-45 -translate-y-[6px]' : ''}`} />
+            {mobileOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
+          
+          <Link href="/" className="flex items-center gap-2 select-none">
+            <div className="w-6 h-6 rounded bg-[#1e3a8a] flex items-center justify-center">
+              <span className="text-white text-[10px] font-bold">R</span>
+            </div>
+            <span className="text-[#0f172a] font-semibold text-base tracking-tight">Rupeexo</span>
+          </Link>
         </div>
+
+        <div className="hidden md:flex items-center gap-1">
+          {TOP_NAV_LINKS.map(({ label, href }) => (
+            <Link 
+              key={label} 
+              href={href} 
+              className={`px-4 py-2 text-sm transition-colors ${pathname === href ? 'text-[#1e3a8a] font-bold' : 'text-slate-500 hover:text-[#1e3a8a]'}`}
+            >
+              {label}
+            </Link>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button className="relative w-9 h-9 flex items-center justify-center rounded-lg border border-slate-200 bg-white">
+            <Bell className="w-4 h-4 text-slate-500" />
+            <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-[#2563eb]" />
+          </button>
+          <div className="w-9 h-9 rounded-lg bg-[#1e3a8a] flex items-center justify-center text-white text-sm font-semibold">A</div>
+        </div>
+
+        {/* Mobile Dropdown Menu */}
+        {mobileOpen && (
+          <div className="absolute top-16 left-0 w-full bg-white border-b border-slate-200 shadow-xl z-50 py-2 md:hidden">
+            {TOP_NAV_LINKS.map(({ label, href }) => (
+              <Link 
+                key={label} 
+                href={href} 
+                onClick={() => setMobileOpen(false)} 
+                className="block px-6 py-3 text-sm font-medium text-slate-600 hover:bg-blue-50"
+              >
+                {label}
+              </Link>
+            ))}
+          </div>
+        )}
       </nav>
 
-      {/* Main App Layout */}
+      {/* ── BODY ── */}
       <div className="flex flex-1 overflow-hidden">
         
         {/* Sidebar */}
         <aside className="hidden md:flex w-64 bg-[#f8fafc] border-r border-slate-200 flex-col pt-8 pb-4 shrink-0 overflow-y-auto">
           <nav className="px-4 space-y-1.5 mb-8">
-            <Link href="/portfolio" className={navLinkClass('/portfolio')}>Overview</Link>
-            <Link href="/holdings" className={navLinkClass('/holdings')}>Holdings</Link>
-            <Link href="/fundamentals" className={navLinkClass('/fundamentals')}>Fundamentals</Link>
-            <Link href="/risk-monitor" className={navLinkClass('/risk-monitor')}>Risk Monitor</Link>
-            <Link href="/ai-summaries" className={navLinkClass('/ai-summaries')}>AI Summaries</Link>
-            <Link href="/watchlist" className={navLinkClass('/watchlist')}>Watchlist</Link>
+            {SIDEBAR_LINKS.map(({ label, href }) => (
+              <Link key={label} href={href} className={navLinkClass(href)}>
+                {label}
+              </Link>
+            ))}
           </nav>
 
           {/* Watchlist Quick View */}
@@ -105,8 +150,8 @@ export default function FundamentalsPage() {
               <h1 className="text-2xl font-bold text-slate-800">Fundamentals Deep Dive</h1>
             </div>
 
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-              <table className="w-full text-left text-[13px]">
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-x-auto">
+              <table className="w-full text-left text-[13px] min-w-[700px]">
                 <thead>
                   <tr className="text-[10px] text-slate-400 tracking-wider uppercase border-b border-slate-100 bg-slate-50">
                     <th className="p-5 font-semibold">Company</th>

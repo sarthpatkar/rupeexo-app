@@ -71,15 +71,13 @@ export default function PortfolioPage() {
   return (
     <div className="flex flex-col h-screen bg-[#f8fafc] font-sans text-slate-800 overflow-hidden relative">
       
-      {/* Navbar */}
+      {/* Navbar with matching logo */}
       <nav className="h-16 bg-white border-b border-slate-200 flex items-center px-8 shrink-0 z-10">
-        <Link href="/" className="flex items-center gap-3 cursor-pointer">
-          <div className="w-8 h-8 bg-[#1e3a8a] text-white flex items-center justify-center font-bold text-lg rounded-md">
-            R
+        <Link href="/" className="flex items-center gap-2 select-none">
+          <div className="w-7 h-7 rounded bg-[#1e3a8a] flex items-center justify-center">
+            <span className="text-white text-sm font-bold">R</span>
           </div>
-          <span className="text-[22px] font-bold text-[#0f172a] tracking-tight">
-            Rupeexo
-          </span>
+          <span className="text-[#0f172a] font-semibold text-lg tracking-tight">Rupeexo</span>
         </Link>
 
         <div className="ml-auto flex items-center gap-3">
