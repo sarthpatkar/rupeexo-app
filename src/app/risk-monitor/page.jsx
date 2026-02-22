@@ -62,6 +62,15 @@ export default function RiskMonitorPage() {
             <Link href="/ai-summaries" className={navLinkClass('/ai-summaries')}>AI Summaries</Link>
             <Link href="/watchlist" className={navLinkClass('/watchlist')}>Watchlist</Link>
           </nav>
+          {/* Dashboard Button */}
+          <div className="px-4 mt-2">
+            <Link
+              href="/dashboard"
+              className={navLinkClass('/dashboard')}
+            >
+              Dashboard
+            </Link>
+          </div>
 
           <div className="px-4 pt-6 flex-1 border-t border-slate-200">
             <h3 className="text-[10px] font-semibold text-slate-400 tracking-widest mb-4 px-2 uppercase tracking-wider">Market Stress</h3>
@@ -94,6 +103,15 @@ export default function RiskMonitorPage() {
                 <Link href="/ai-summaries" onClick={() => setMobileOpen(false)} className={navLinkClass('/ai-summaries')}>AI Summaries</Link>
                 <Link href="/watchlist" onClick={() => setMobileOpen(false)} className={navLinkClass('/watchlist')}>Watchlist</Link>
               </nav>
+              <div className="border-t border-slate-200 pt-4 mt-4">
+                <Link
+                  href="/dashboard"
+                  onClick={() => setMobileOpen(false)}
+                  className={navLinkClass('/dashboard')}
+                >
+                  Dashboard
+                </Link>
+              </div>
             </div>
           </div>
         )}

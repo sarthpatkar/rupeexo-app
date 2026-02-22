@@ -86,6 +86,16 @@ export default function AiSummariesPage() {
               ))}
             </ul>
           </div>
+
+          {/* Bottom Dashboard Button */}
+          <div className="px-4 pt-4 border-t border-slate-200">
+            <Link
+              href="/dashboard"
+              className={navLinkClass('/dashboard')}
+            >
+              Dashboard
+            </Link>
+          </div>
         </aside>
 
         {mobileOpen && (
@@ -104,6 +114,17 @@ export default function AiSummariesPage() {
                 <Link href="/ai-summaries" onClick={() => setMobileOpen(false)} className={navLinkClass('/ai-summaries')}>AI Summaries</Link>
                 <Link href="/watchlist" onClick={() => setMobileOpen(false)} className={navLinkClass('/watchlist')}>Watchlist</Link>
               </nav>
+
+              {/* Bottom Dashboard Button */}
+              <div className="mt-6 pt-4 border-t border-slate-200">
+                <Link
+                  href="/dashboard"
+                  onClick={() => setMobileOpen(false)}
+                  className={navLinkClass('/dashboard')}
+                >
+                  Dashboard
+                </Link>
+              </div>
             </div>
           </div>
         )}

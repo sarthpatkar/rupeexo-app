@@ -76,13 +76,6 @@ export default function PortfolioPage() {
       {/* ── NAVBAR ── */}
       <nav className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 md:px-8 shrink-0 z-50 relative">
         <div className="flex items-center gap-3">
-          <button 
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden p-1.5 rounded-md hover:bg-slate-100 text-slate-600"
-          >
-            {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
-          
           <Link href="/" className="flex items-center gap-2 select-none">
             <div className="w-7 h-7 rounded bg-[#1e3a8a] flex items-center justify-center">
               <span className="text-white text-sm font-bold">R</span>
@@ -92,23 +85,35 @@ export default function PortfolioPage() {
         </div>
 
         <div className="hidden md:flex items-center gap-1">
-          {TOP_NAV_LINKS.map(({ label, href }) => (
-            <Link 
-              key={label} 
-              href={href} 
-              className={`px-4 py-2 text-sm transition-colors ${pathname === href ? 'text-[#1e3a8a] font-bold' : 'text-slate-500 hover:text-[#1e3a8a]'}`}
-            >
-              {label}
-            </Link>
-          ))}
+          {TOP_NAV_LINKS.map(({ label, href }) => {
+            const isActive = pathname === href;
+            return (
+              <Link 
+                key={label} 
+                href={href} 
+                className={`relative px-4 py-2 rounded-md text-sm transition-all duration-150 ${
+                  isActive
+                    ? 'text-[#1e3a8a] bg-blue-50 font-medium'
+                    : 'text-slate-500 hover:text-[#1e3a8a] hover:bg-slate-50'
+                }`}
+              >
+                {label}
+                {isActive && (
+                  <span className="absolute bottom-0 left-4 right-4 h-[1.5px] bg-[#2563eb] rounded-full" />
+                )}
+              </Link>
+            );
+          })}
         </div>
 
         <div className="flex items-center gap-3">
-          <button className="relative w-9 h-9 flex items-center justify-center rounded-lg border border-slate-200 bg-white">
-            <Bell className="w-4 h-4 text-slate-500" />
-            <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-[#2563eb]" />
+          <button 
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="md:hidden w-9 h-9 flex items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600"
+            aria-label="Toggle menu"
+          >
+            {isMenuOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
-          <div className="w-9 h-9 rounded-lg bg-[#1e3a8a] flex items-center justify-center text-white text-sm font-semibold">A</div>
         </div>
       </nav>
 
@@ -124,20 +129,36 @@ export default function PortfolioPage() {
             
             {/* Top Links */}
             <div className="space-y-2 mb-6">
-              {TOP_NAV_LINKS.map(({ label, href }) => (
-                <Link
-                  key={label}
-                  href={href}
-                  onClick={() => setIsMenuOpen(false)}
-                  className={`block px-4 py-2 rounded-lg text-sm ${
-                    pathname === href
-                      ? 'bg-blue-50 text-[#1e3a8a] font-semibold'
-                      : 'text-slate-600 hover:bg-slate-50'
-                  }`}
-                >
-                  {label}
-                </Link>
-              ))}
+              {TOP_NAV_LINKS.map(({ label, href }) => {
+                const active = pathname === href;
+                return (
+                  <Link
+                    key={label}
+                    href={href}
+                    onClick={() => setIsMenuOpen(false)}
+                    className={`flex items-center justify-between px-4 py-3 rounded-2xl text-sm transition-all border ${
+                      active
+                        ? 'bg-blue-50 border-blue-200 text-[#1e3a8a] font-semibold shadow-sm'
+                        : 'border-transparent text-slate-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`w-2.5 h-2.5 rounded-full ${
+                          active ? 'bg-[#2563eb]' : 'bg-slate-300'
+                        }`}
+                      />
+                      {label}
+                    </div>
+
+                    {active && (
+                      <span className="text-[11px] font-semibold text-[#2563eb] bg-blue-100 border border-blue-200 px-2.5 py-0.5 rounded-full">
+                        Current
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
             </div>
 
             <div className="border-t border-slate-200 pt-4 space-y-2">
@@ -146,9 +167,9 @@ export default function PortfolioPage() {
                   key={label}
                   href={href}
                   onClick={() => setIsMenuOpen(false)}
-                  className={`block px-4 py-2 rounded-lg text-sm ${
+                  className={`block px-4 py-2.5 rounded-xl text-sm transition-all ${
                     isActivePath(href)
-                      ? 'bg-blue-50 text-[#1e3a8a] font-semibold'
+                      ? 'bg-white shadow-sm border border-slate-200 text-[#1e3a8a] font-semibold'
                       : 'text-slate-600 hover:bg-slate-50'
                   }`}
                 >

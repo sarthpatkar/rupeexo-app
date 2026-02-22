@@ -105,6 +105,15 @@ export default function PortfolioPage() {
             <Link href="/ai-summaries" className={navLinkClass('/ai-summaries')}>AI Summaries</Link>
             <Link href="/watchlist" className={navLinkClass('/watchlist')}>Watchlist</Link>
           </nav>
+          {/* Bottom Dashboard Button */}
+          <div className="mt-auto px-4 pt-4 border-t border-slate-200">
+            <Link
+              href="/dashboard"
+              className={navLinkClass('/dashboard')}
+            >
+              Dashboard
+            </Link>
+          </div>
         </aside>
 
         {/* Mobile Sidebar */}
@@ -124,6 +133,15 @@ export default function PortfolioPage() {
                 <Link href="/ai-summaries" onClick={() => setMobileMenuOpen(false)} className={navLinkClass('/ai-summaries')}>AI Summaries</Link>
                 <Link href="/watchlist" onClick={() => setMobileMenuOpen(false)} className={navLinkClass('/watchlist')}>Watchlist</Link>
               </nav>
+              <div className="mt-6 pt-4 border-t border-slate-200">
+                <Link
+                  href="/dashboard"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={navLinkClass('/dashboard')}
+                >
+                  Dashboard
+                </Link>
+              </div>
             </div>
           </div>
         )}
