@@ -7,6 +7,7 @@ import { ShieldAlert, TrendingUp, BarChart3, PieChart, AlertCircle } from 'lucid
 
 export default function RiskMonitorPage() {
   const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   // Helper for active sidebar links
   const navLinkClass = (path) => 
@@ -30,11 +31,22 @@ export default function RiskMonitorPage() {
           <div className="w-8 h-8 bg-[#1e3a8a] text-white flex items-center justify-center font-bold text-lg rounded-md">R</div>
           <span className="text-[22px] font-bold text-[#0f172a] tracking-tight">Rupeexo</span>
         </Link>
-        <div className="ml-auto flex items-center gap-5">
-          <div className="text-sm font-medium text-slate-400 hidden sm:block">app.rupeexo.com/risk-monitor</div>
-          <Link href="/dashboard" className="flex items-center gap-1.5 text-[13px] font-semibold text-slate-600 bg-slate-50 hover:bg-slate-100 hover:text-[#1d3570] border border-slate-200 px-3.5 py-1.5 rounded-lg transition-colors shadow-sm">
-            <span className="text-lg leading-none mb-0.5">←</span> Dashboard
-          </Link>
+        <div className="ml-auto flex items-center gap-3">
+          <div className="text-sm font-medium text-slate-400 hidden md:block">
+            app.rupeexo.com/risk-monitor
+          </div>
+
+          {/* Hamburger */}
+          <button
+            id="hamburger-btn"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="md:hidden w-9 h-9 flex flex-col items-center justify-center gap-[5px] rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-all duration-150"
+            aria-label="Toggle menu"
+          >
+            <span className={`block h-[1.5px] bg-slate-600 transition-all duration-200 origin-center ${mobileOpen ? 'w-4 rotate-45 translate-y-[6.5px]' : 'w-5'}`} />
+            <span className={`block h-[1.5px] bg-slate-600 transition-all duration-200 ${mobileOpen ? 'opacity-0 w-0' : 'w-5'}`} />
+            <span className={`block h-[1.5px] bg-slate-600 transition-all duration-200 origin-center ${mobileOpen ? 'w-4 -rotate-45 -translate-y-[6.5px]' : 'w-5'}`} />
+          </button>
         </div>
       </nav>
 
@@ -42,7 +54,7 @@ export default function RiskMonitorPage() {
       <div className="flex flex-1 overflow-hidden">
         
         {/* Sidebar - Matched to Holdings (w-64) */}
-        <aside className="w-64 bg-[#f8fafc] border-r border-slate-200 flex flex-col pt-8 pb-4 shrink-0 overflow-y-auto">
+        <aside className="hidden md:flex w-64 bg-[#f8fafc] border-r border-slate-200 flex-col pt-8 pb-4 shrink-0 overflow-y-auto">
           <nav className="px-4 space-y-1.5 mb-8">
             <Link href="/portfolio" className={navLinkClass('/portfolio')}>Overview</Link>
             <Link href="/holdings" className={navLinkClass('/holdings')}>Holdings</Link>
@@ -62,6 +74,30 @@ export default function RiskMonitorPage() {
             </div>
           </div>
         </aside>
+
+        {/* Mobile Sidebar */}
+        {mobileOpen && (
+          <div className="fixed inset-0 z-40 md:hidden">
+            <div
+              className="absolute inset-0 bg-black/30 backdrop-blur-sm"
+              onClick={() => setMobileOpen(false)}
+            />
+
+            <div
+              id="mobile-menu"
+              className="absolute left-0 top-0 bottom-0 w-72 bg-white shadow-xl p-6 overflow-y-auto"
+            >
+              <nav className="space-y-2">
+                <Link href="/portfolio" onClick={() => setMobileOpen(false)} className={navLinkClass('/portfolio')}>Overview</Link>
+                <Link href="/holdings" onClick={() => setMobileOpen(false)} className={navLinkClass('/holdings')}>Holdings</Link>
+                <Link href="/fundamentals" onClick={() => setMobileOpen(false)} className={navLinkClass('/fundamentals')}>Fundamentals</Link>
+                <Link href="/risk-monitor" onClick={() => setMobileOpen(false)} className={navLinkClass('/risk-monitor')}>Risk Monitor</Link>
+                <Link href="/ai-summaries" onClick={() => setMobileOpen(false)} className={navLinkClass('/ai-summaries')}>AI Summaries</Link>
+                <Link href="/watchlist" onClick={() => setMobileOpen(false)} className={navLinkClass('/watchlist')}>Watchlist</Link>
+              </nav>
+            </div>
+          </div>
+        )}
 
         {/* Main Content Area */}
         <main className="flex-1 p-8 overflow-y-auto bg-[#f8fafc]">
