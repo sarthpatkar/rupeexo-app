@@ -116,12 +116,59 @@ function CursorHalo() {
 }
 
 /* ─────────────────────────────────────────────
+   PROFILE MODAL
+───────────────────────────────────────────── */
+
+function ProfileModal({ open, onClose, userName }) {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <div className="relative w-full max-w-md mx-auto bg-white rounded-2xl border border-slate-200 shadow-[0_24px_60px_rgba(15,23,42,0.18)] p-6 fade-up">
+        <h2 className="text-lg font-semibold text-[#0f172a] mb-4">
+          Profile
+        </h2>
+
+        <div className="space-y-3 text-sm">
+          <div>
+            <p className="text-slate-500">Name</p>
+            <p className="font-medium text-[#0f172a]">{userName || 'User'}</p>
+          </div>
+
+          <button className="w-full text-left px-3 py-2 rounded-lg border border-slate-200 hover:bg-slate-50">
+            Change Password
+          </button>
+
+          <button className="w-full text-left px-3 py-2 rounded-lg border border-slate-200 hover:bg-slate-50">
+            Add / Update Phone Number
+          </button>
+        </div>
+
+        <button
+          onClick={onClose}
+          className="mt-6 w-full py-2 bg-[#1e3a8a] text-white rounded-lg hover:bg-[#1e40af]"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
    NAVBAR
 ───────────────────────────────────────────── */
 
 function Navbar({ userName }) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const pathname = usePathname();
   const currentPath = pathname;
   const router = useRouter();
@@ -132,8 +179,12 @@ function Navbar({ userName }) {
     router.replace('/login');
   };
 
-  const toggleTheme = () => {
-    document.documentElement.classList.toggle('dark');
+  const setTheme = (mode) => {
+    if (mode === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
   };
 
   const initial = userName ? userName.charAt(0).toUpperCase() : 'U';
@@ -143,6 +194,17 @@ function Navbar({ userName }) {
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const fn = (e) => {
+      if (!e.target.closest('#mobile-menu') && !e.target.closest('#hamburger-btn')) {
+        setMobileOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', fn);
+    return () => document.removeEventListener('mousedown', fn);
+  }, [mobileOpen]);
 
   return (
     <nav
@@ -200,19 +262,58 @@ function Navbar({ userName }) {
           {/* Dropdown Menu */}
           {menuOpen && (
             <div className="absolute right-0 top-12 w-56 bg-white border border-slate-200 rounded-xl shadow-lg p-2 z-50">
-              <button className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 rounded">
-                Profile (Change password, phone)
-              </button>
-              <button className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 rounded">
-                Refer & Earn
-              </button>
+              {/* Profile */}
               <button
-                onClick={toggleTheme}
+                onClick={() => {
+                  setProfileOpen(true);
+                  setMenuOpen(false);
+                }}
                 className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 rounded"
               >
-                Settings (Dark / Light Mode)
+                Profile
               </button>
+
+              {/* Refer & Earn */}
+              <button
+                onClick={() => {
+                  alert("Coming soon 🚀");
+                  setMenuOpen(false);
+                }}
+                className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 rounded"
+              >
+                Refer & Earn
+              </button>
+
+              {/* Settings */}
+              <div className="relative">
+                <button
+                  onClick={() => setSettingsOpen(!settingsOpen)}
+                  className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 rounded"
+                >
+                  Settings
+                </button>
+
+                {settingsOpen && (
+                  <div className="ml-2 mt-1 border border-slate-200 rounded-lg overflow-hidden">
+                    <button
+                      onClick={() => setTheme('light')}
+                      className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50"
+                    >
+                      Light Mode
+                    </button>
+                    <button
+                      onClick={() => setTheme('dark')}
+                      className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50"
+                    >
+                      Dark Mode
+                    </button>
+                  </div>
+                )}
+              </div>
+
               <hr className="my-2" />
+
+              {/* Logout */}
               <button
                 onClick={handleLogout}
                 className="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded"
@@ -221,8 +322,70 @@ function Navbar({ userName }) {
               </button>
             </div>
           )}
+
+          {/* Hamburger — mobile only */}
+          <button
+            id="hamburger-btn"
+            onClick={() => setMobileOpen((o) => !o)}
+            className="md:hidden w-9 h-9 flex flex-col items-center justify-center gap-[5px] rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-all duration-150 ml-1"
+            aria-label="Toggle menu"
+          >
+            <span className={`block h-[1.5px] bg-slate-600 transition-all duration-200 origin-center ${mobileOpen ? 'w-4 rotate-45 translate-y-[6.5px]' : 'w-5'}`} />
+            <span className={`block h-[1.5px] bg-slate-600 transition-all duration-200 ${mobileOpen ? 'opacity-0 w-0' : 'w-5'}`} />
+            <span className={`block h-[1.5px] bg-slate-600 transition-all duration-200 origin-center ${mobileOpen ? 'w-4 -rotate-45 -translate-y-[6.5px]' : 'w-5'}`} />
+          </button>
         </div>
       </div>
+      {/* Mobile dropdown */}
+      {mobileOpen && (
+        <div
+          id="mobile-menu"
+          className="md:hidden absolute left-0 right-0 top-full border-t border-slate-100 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.10)] z-50"
+        >
+          <div className="px-4 py-3 space-y-1">
+            {NAV_LINKS.map((link) => {
+              const isActive = link.href === currentPath;
+              return (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  onClick={() => setMobileOpen(false)}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-150 ${
+                    isActive
+                      ? 'bg-blue-50 text-[#1e3a8a] border border-blue-100'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-[#1e3a8a]'
+                  }`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isActive ? 'bg-[#2563eb]' : 'bg-slate-200'}`} />
+                  {link.label}
+                  {isActive && (
+                    <span className="ml-auto text-[10px] font-semibold text-[#2563eb] bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full">
+                      Current
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* User row */}
+          <div className="px-8 py-3 border-t border-slate-100 bg-slate-50 flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-[#1e3a8a] flex items-center justify-center shrink-0">
+              <span className="text-white text-xs font-semibold">{initial}</span>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-[#0f172a]">{userName || 'User'}</p>
+              <p className="text-[11px] text-slate-400">Account</p>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Profile Modal */}
+      <ProfileModal
+        open={profileOpen}
+        onClose={() => setProfileOpen(false)}
+        userName={userName}
+      />
     </nav>
   );
 }
