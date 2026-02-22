@@ -99,43 +99,127 @@ function CursorHalo() {
 ───────────────────────────────────────────── */
 
 function Navbar() {
-  const [scrolled, setScrolled] = useState(false);
+  const [scrolled,   setScrolled]   = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const currentPath = '/watchlist';
+
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 8);
     window.addEventListener('scroll', fn, { passive: true });
     return () => window.removeEventListener('scroll', fn);
   }, []);
+
+  /* Close on outside click */
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const fn = (e) => {
+      if (!e.target.closest('#mobile-menu') && !e.target.closest('#hamburger-btn'))
+        setMobileOpen(false);
+    };
+    document.addEventListener('mousedown', fn);
+    return () => document.removeEventListener('mousedown', fn);
+  }, [mobileOpen]);
+
   return (
     <nav className={`sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-slate-200 transition-shadow duration-200 ${scrolled ? 'shadow-sm' : ''}`}>
       <div className="max-w-7xl mx-auto px-6 md:px-8 h-16 flex items-center justify-between">
+
+        {/* Logo */}
         <Link href="/" className="flex items-center gap-2 select-none">
           <div className="w-7 h-7 rounded bg-[#1e3a8a] flex items-center justify-center">
             <span className="text-white text-sm font-bold">R</span>
           </div>
           <span className="text-[#0f172a] font-semibold text-lg tracking-tight">Rupeexo</span>
         </Link>
+
+        {/* Desktop nav */}
         <div className="hidden md:flex items-center gap-1">
           {NAV_LINKS.map(({ label, href }) => {
             const isActive = href === currentPath;
             return (
-              <Link key={label} href={href} className={`relative px-4 py-2 rounded-md text-sm transition-all duration-150 ${isActive ? 'text-[#1e3a8a] bg-blue-50 font-medium' : 'text-slate-500 hover:text-[#1e3a8a] hover:bg-slate-50'}`}>
+              <Link
+                key={label}
+                href={href}
+                className={`relative px-4 py-2 rounded-md text-sm transition-all duration-150 ${
+                  isActive ? 'text-[#1e3a8a] bg-blue-50 font-medium' : 'text-slate-500 hover:text-[#1e3a8a] hover:bg-slate-50'
+                }`}
+              >
                 {label}
                 {isActive && <span className="absolute bottom-0 left-4 right-4 h-[1.5px] bg-[#2563eb] rounded-full" />}
               </Link>
             );
           })}
         </div>
-        <div className="flex items-center gap-3">
+
+        {/* Right: bell + avatar + hamburger */}
+        <div className="flex items-center gap-2">
           <button className="relative w-9 h-9 flex items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 transition-all duration-150">
             <Bell className="w-4 h-4" />
             <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-[#2563eb]" />
           </button>
+
           <div className="w-9 h-9 rounded-lg bg-[#1e3a8a] flex items-center justify-center">
             <span className="text-white text-sm font-semibold">A</span>
           </div>
+
+          {/* Hamburger — mobile only */}
+          <button
+            id="hamburger-btn"
+            onClick={() => setMobileOpen((o) => !o)}
+            className="md:hidden w-9 h-9 flex flex-col items-center justify-center gap-[5px] rounded-lg border border-slate-200 bg-white hover:bg-slate-50 transition-all duration-150 ml-1"
+            aria-label="Toggle menu"
+          >
+            <span className={`block h-[1.5px] bg-slate-600 transition-all duration-200 origin-center ${mobileOpen ? 'w-4 rotate-45 translate-y-[6.5px]' : 'w-5'}`} />
+            <span className={`block h-[1.5px] bg-slate-600 transition-all duration-200 ${mobileOpen ? 'opacity-0 w-0' : 'w-5'}`} />
+            <span className={`block h-[1.5px] bg-slate-600 transition-all duration-200 origin-center ${mobileOpen ? 'w-4 -rotate-45 -translate-y-[6.5px]' : 'w-5'}`} />
+          </button>
         </div>
       </div>
+
+      {/* Mobile dropdown */}
+      {mobileOpen && (
+        <div
+          id="mobile-menu"
+          className="md:hidden absolute left-0 right-0 top-full border-t border-slate-100 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.10)] z-50"
+        >
+          <div className="px-4 py-3 space-y-1">
+            {NAV_LINKS.map(({ label, href }) => {
+              const isActive = href === currentPath;
+              return (
+                <Link
+                  key={label}
+                  href={href}
+                  onClick={() => setMobileOpen(false)}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-150 ${
+                    isActive
+                      ? 'bg-blue-50 text-[#1e3a8a] border border-blue-100'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-[#1e3a8a]'
+                  }`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isActive ? 'bg-[#2563eb]' : 'bg-slate-200'}`} />
+                  {label}
+                  {isActive && (
+                    <span className="ml-auto text-[10px] font-semibold text-[#2563eb] bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-full">
+                      Current
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* User row */}
+          <div className="px-8 py-3 border-t border-slate-100 bg-slate-50 flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-[#1e3a8a] flex items-center justify-center shrink-0">
+              <span className="text-white text-xs font-semibold">A</span>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-[#0f172a]">Abhishek</p>
+              <p className="text-[11px] text-slate-400">Free Plan · 2 watchlists</p>
+            </div>
+          </div>
+        </div>
+      )}
     </nav>
   );
 }
@@ -857,9 +941,9 @@ export default function WatchlistPage() {
           <div className="fade-up delay-2 grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
               { label: 'Total Watching',  value: allWatchedStocks.length,  sub: 'across all lists',  subUp: null,  accent: 'default' },
-              { label: 'Watchlists',      value: watchlists.length,        sub: `${MAX_FREE_WATCHLISTS} on free plan`, subUp: null, accent: 'blue' },
-              { label: 'Gainers Today',   value: gainers,                  sub: 'stocks up',         subUp: true,  accent: 'green' },
-              { label: 'Losers Today',    value: losers,                   sub: 'stocks down',       subUp: false, accent: 'red' },
+              { label: 'Watchlists',      value: watchlists.length,         sub: `${MAX_FREE_WATCHLISTS} on free plan`, subUp: null, accent: 'blue' },
+              { label: 'Gainers Today',   value: gainers,                   sub: 'stocks up',         subUp: true,  accent: 'green' },
+              { label: 'Losers Today',    value: losers,                    sub: 'stocks down',       subUp: false, accent: 'red' },
             ].map((card) => (
               <div key={card.label} className="card-hover border border-slate-200 rounded-xl bg-white p-6 flex flex-col gap-3">
                 <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-[0.13em]">{card.label}</p>
