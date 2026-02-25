@@ -1,19 +1,8 @@
 import { NextResponse } from "next/server"
 import { createServerClient } from "@supabase/ssr"
 
-export async function GET(request) {
-  const requestUrl = new URL(request.url)
-  const code = requestUrl.searchParams.get("code")
-
-  if (!code) {
-    return NextResponse.redirect(new URL("/login", request.url))
-  }
-
-  const response = NextResponse.redirect(
-    new URL("/dashboard", request.url)
-  )
-
-  const supabase = createServerClient(
+function createSupabaseServerClient(request, response) {
+  return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     {
@@ -38,12 +27,15 @@ export async function GET(request) {
       },
     }
   )
+}
+
+export async function POST(request) {
+  const response = NextResponse.json({ ok: true })
+  const supabase = createSupabaseServerClient(request, response)
 
   try {
-    await supabase.auth.exchangeCodeForSession(code)
-  } catch {
-    return NextResponse.redirect(new URL("/login", request.url))
-  }
+    await supabase.auth.signOut()
+  } catch {}
 
   return response
 }

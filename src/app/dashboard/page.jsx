@@ -3,8 +3,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { createClient } from '../../lib/supabase/client';
+import { usePathname } from 'next/navigation';
 import {
   LayoutGrid,
   Search,
@@ -33,8 +32,6 @@ import {
   Cell,
   Sector,
 } from 'recharts';
-
-const supabase = createClient();
 
 /* ─────────────────────────────────────────────
    SPARKLINE
@@ -171,12 +168,15 @@ function Navbar({ userName }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const pathname = usePathname();
   const currentPath = pathname;
-  const router = useRouter();
 
   const handleLogout = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.replace('/login');
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+      });
+    } finally {
+      window.location.assign('/login');
+    }
   };
 
   const setTheme = (mode) => {
@@ -504,7 +504,6 @@ export default function Dashboard() {
   const [mounted, setMounted] = useState(false);
   const [activeIndex, setActiveIndex] = useState(null);
   const [lastUpdated] = useState('4 min ago');
-  const router = useRouter();
   const [userName, setUserName] = useState('');
   const [authChecked, setAuthChecked] = useState(false);
 
@@ -513,45 +512,36 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    const supabase = createClient();
-
     const checkSession = async () => {
-      const { data } = await supabase.auth.getSession();
+      try {
+        const res = await fetch("/api/auth/session", { cache: "no-store" });
+        if (!res.ok) {
+          window.location.assign("/login");
+          return;
+        }
 
-      if (!data.session) {
-        router.replace("/login");
-        return;
+        const data = await res.json();
+        const user = data?.user;
+        if (!user) {
+          window.location.assign("/login");
+          return;
+        }
+
+        const name =
+          user.full_name ||
+          user.metadata_full_name ||
+          (user.email ? user.email.split("@")[0] : "User");
+
+        setUserName(name);
+      } catch (error) {
+        window.location.assign("/login");
+      } finally {
+        setAuthChecked(true);
       }
-
-      const user = data.session.user;
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("full_name")
-        .eq("id", user.id)
-        .single();
-
-      const name =
-        profile?.full_name ||
-        user.user_metadata?.full_name ||
-        (user.email ? user.email.split("@")[0] : "User");
-
-      setUserName(name);
-      setAuthChecked(true);
     };
 
     checkSession();
-
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        if (!session) router.replace("/login");
-      }
-    );
-
-    return () => {
-      listener.subscription.unsubscribe();
-    };
-  }, [router]);
+  }, []);
 
   const fmt = (val) =>
     mounted ? `₹${Number(val).toLocaleString('en-IN')}` : '';

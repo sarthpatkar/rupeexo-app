@@ -1,8 +1,7 @@
 "use client"
 import { createClient } from "../../lib/supabase/client"
-import { useState, useId, useEffect } from "react"
+import { useState, useId } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 
 // ─── Internal Helper Components ───────────────────────────────────────────────
 
@@ -128,34 +127,7 @@ function validateForm(form) {
 // ─── Page Component ───────────────────────────────────────────────────────────
 
 export default function LoginPage() {
-  const router = useRouter()
   const supabase = createClient()
-
-  useEffect(() => {
-    const checkSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
-
-      if (session?.user) {
-        router.replace("/dashboard")
-      }
-    }
-
-    checkSession()
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        router.replace("/dashboard")
-      }
-    })
-
-    return () => {
-      subscription.unsubscribe()
-    }
-  }, [router, supabase])
 
   const emailId = useId()
   const passwordId = useId()
@@ -175,6 +147,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [authError, setAuthError] = useState("")
 
   const currentErrors = validateForm(form)
   const isValid = Object.keys(currentErrors).length === 0
@@ -199,53 +172,62 @@ export default function LoginPage() {
     return undefined
   }
 
-async function handleSubmit(e) {
-  e.preventDefault()
-  setSubmitted(true)
-  setErrors(currentErrors)
+  async function handleSubmit(e) {
+    e.preventDefault()
+    setSubmitted(true)
+    setErrors(currentErrors)
+    setAuthError("")
 
-  if (!isValid) return
+    if (!isValid) return
 
-  setIsLoading(true)
+    setIsLoading(true)
 
-  
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: form.email,
+          password: form.password,
+        }),
+      })
 
-  const { error } = await supabase.auth.signInWithPassword({
-    email: form.email,
-    password: form.password,
-  })
+      const payload = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setAuthError(payload?.error || "Login failed. Please try again.")
+        return
+      }
 
-  setIsLoading(false)
-
-  if (error) {
-    alert(error.message)
-    return
+      window.location.assign("/dashboard")
+    } catch {
+      setAuthError("Unable to reach login server. Check your internet or try again.")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  // Ensure session cookie is ready before redirect
-  await supabase.auth.getSession()
-
-  router.replace("/dashboard")
-}
-
   async function handleGoogleLogin() {
-    
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${location.origin}/auth/callback`,
+        },
+      })
 
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${location.origin}/auth/callback`,
-      },
-    })
+      if (error) {
+        setAuthError(error.message)
+        return
+      }
 
-    if (error) {
-      alert(error.message)
-      return
-    }
-
-    // Important: redirect browser to Supabase OAuth URL
-    if (data?.url) {
-      window.location.href = data.url
+      // Important: redirect browser to Supabase OAuth URL
+      if (data?.url) {
+        window.location.href = data.url
+      }
+    } catch (error) {
+      setAuthError("Unable to connect to Google login right now. Try again.")
     }
   }
 
@@ -514,6 +496,16 @@ async function handleSubmit(e) {
                     "Sign In"
                   )}
                 </button>
+
+                {authError && (
+                  <p
+                    role="alert"
+                    className="mt-2 text-center text-sm"
+                    style={{ color: "#b91c1c" }}
+                  >
+                    {authError}
+                  </p>
+                )}
 
                 {/* Security Note */}
                 <p

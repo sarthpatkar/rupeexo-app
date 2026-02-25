@@ -1,29 +1,19 @@
 "use client";
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 
 /*
-  Mock stock dataset — expanded to 50+ stocks with all ratios
+  Mock stock dataset sourced from uploaded NSE stock list, each with random ratios
   (so filtering works across every filter key)
 */
-const STOCK_NAMES = [
-  "HDFC Bank","Infosys","Reliance","TCS","Asian Paints","ICICI Bank","SBI",
-  "Kotak Bank","Axis Bank","Bajaj Finance","Bajaj Finserv","ITC","HUL",
-  "Larsen & Toubro","Maruti Suzuki","Tata Motors","Sun Pharma","Dr Reddy",
-  "Divis Labs","Wipro","HCL Tech","Tech Mahindra","NTPC","ONGC","Coal India",
-  "Power Grid","Adani Ports","Adani Ent","JSW Steel","Tata Steel","UltraTech",
-  "Grasim","Pidilite","Dmart","Titan","Britannia","Nestle India","Avenue Supermarts",
-  "IndusInd Bank","Bank of Baroda","PNB","IRCTC","HAL","BEL","Zomato","Paytm",
-  "Nykaa","Trent","Ambuja Cement","ACC","Siemens"
-];
-
 const random = (min, max) =>
   Number((Math.random() * (max - min) + min).toFixed(2));
 
-const createStock = (name) => ({
+const createStock = ({ symbol, name }) => ({
+  symbol,
   name,
   sales: random(1000, 50000),
   opm: random(5, 60),
@@ -69,8 +59,6 @@ const createStock = (name) => ({
   return_3y: random(-10, 150),
   return_5y: random(0, 300),
 });
-
-const STOCKS = STOCK_NAMES.map((n) => createStock(n));
 
 /*
   Available filters (ratios)
@@ -147,15 +135,11 @@ export default function ScreenerPage() {
     return pathname === href;
   };
   // per-filter config: operator + value
-  const [filterConfig, setFilterConfig] = useState({
-    pe: { op: "<", value: 30 },
-    pb: { op: "<", value: 5 },
-    opm: { op: ">", value: 15 },
-    npm: { op: ">", value: 10 },
-    roe: { op: ">", value: 12 },
-  });
+  const [filterConfig, setFilterConfig] = useState({});
   const [selectedFilters, setSelectedFilters] = useState(["pe", "pb"]);
-  const [filteredStocks, setFilteredStocks] = useState(STOCKS);
+  const [allStocks, setAllStocks] = useState([]);
+  const [filteredStocks, setFilteredStocks] = useState([]);
+  const [stocksLoading, setStocksLoading] = useState(true);
   const [watchlistModal, setWatchlistModal] = useState(false);
   const [watchlists, setWatchlists] = useState(["My Watchlist"]);
   const [newWatchlist, setNewWatchlist] = useState("");
@@ -180,6 +164,43 @@ export default function ScreenerPage() {
   // Saved screeners
   const [savedScreeners, setSavedScreeners] = useState([]);
   const [newScreenerName, setNewScreenerName] = useState("");
+
+  useEffect(() => {
+    let active = true;
+
+    const loadStocks = async () => {
+      try {
+        const response = await fetch("/nseStocks.json");
+        if (!response.ok) {
+          throw new Error(`Failed to load stocks (${response.status})`);
+        }
+
+        const rawStocks = await response.json();
+        if (!Array.isArray(rawStocks)) {
+          throw new Error("Invalid stocks payload");
+        }
+
+        if (active) {
+          setAllStocks(rawStocks.map((stock) => createStock(stock)));
+        }
+      } catch (error) {
+        console.error("Failed to load screener stocks:", error);
+        if (active) {
+          setAllStocks([]);
+        }
+      } finally {
+        if (active) {
+          setStocksLoading(false);
+        }
+      }
+    };
+
+    loadStocks();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     const stored = localStorage.getItem("savedScreeners");
@@ -223,7 +244,7 @@ export default function ScreenerPage() {
 
   // Apply filters and sorting whenever selection/config/sort changes
   useEffect(() => {
-    let result = STOCKS.filter((stock) => {
+    let result = allStocks.filter((stock) => {
       return selectedFilters.every((key) => {
         const cfg = filterConfig[key];
         if (!cfg) return true;
@@ -251,14 +272,17 @@ export default function ScreenerPage() {
     });
 
     setFilteredStocks(result);
-  }, [selectedFilters, filterConfig, sortConfig]);
+  }, [allStocks, selectedFilters, filterConfig, sortConfig]);
 
   /*
     CSV Download
   */
   const downloadCSV = () => {
-    const headers = ["Company", ...selectedFilters];
+    if (filteredStocks.length === 0) return;
+
+    const headers = ["Symbol", "Company", ...selectedFilters];
     const rows = filteredStocks.map((stock) => [
+      stock.symbol,
       stock.name,
       ...selectedFilters.map((f) => stock[f]),
     ]);
@@ -556,7 +580,9 @@ export default function ScreenerPage() {
 
           {/* Result Count */}
           <div className="text-sm text-slate-500">
-            {filteredStocks.length} stocks matched
+            {stocksLoading
+              ? "Loading stocks..."
+              : `${filteredStocks.length} stocks matched`}
           </div>
 
           {/* Active Filter Chips */}
@@ -589,7 +615,7 @@ export default function ScreenerPage() {
                       onClick={() => handleSort("name")}
                       className="p-4 font-semibold cursor-pointer"
                     >
-                      Company {sortConfig.key === "name" ? (sortConfig.direction === "asc" ? "▲" : "▼") : ""}
+                      Company / Symbol {sortConfig.key === "name" ? (sortConfig.direction === "asc" ? "▲" : "▼") : ""}
                     </th>
                     {selectedFilters.map((f) => (
                       <th
@@ -605,39 +631,62 @@ export default function ScreenerPage() {
                 </thead>
 
                 <tbody className="divide-y divide-slate-100">
-                  {filteredStocks.map((stock) => (
-                    <tr
-                      key={stock.name}
-                      className="hover:bg-slate-50 transition-all duration-150"
-                    >
-                      <td className="p-4 font-semibold text-slate-700">
-                        {stock.name}
-                      </td>
-
-                      {selectedFilters.map((f) => (
-                        <td
-                          key={f}
-                          className="p-4 text-right text-slate-600"
-                        >
-                          {stock[f]}
-                        </td>
-                      ))}
-
-                      {/* Add to Watchlist Button */}
-                      <td className="p-4 text-right">
-                        <button
-                          onClick={() => {
-                            setStockToAdd(stock.name);
-                            setSelectedWatchlist(watchlists[0] || "My Watchlist");
-                            setWatchlistModal(true);
-                          }}
-                          className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-100"
-                        >
-                          +
-                        </button>
+                  {stocksLoading ? (
+                    <tr>
+                      <td
+                        colSpan={selectedFilters.length + 2}
+                        className="p-6 text-center text-slate-500"
+                      >
+                        Loading screener data...
                       </td>
                     </tr>
-                  ))}
+                  ) : filteredStocks.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={selectedFilters.length + 2}
+                        className="p-6 text-center text-slate-500"
+                      >
+                        No stocks matched your current filters.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredStocks.map((stock) => (
+                      <tr
+                        key={stock.symbol}
+                        className="hover:bg-slate-50 transition-all duration-150"
+                      >
+                        <td className="p-4 font-semibold text-slate-700">
+                          <div>{stock.name}</div>
+                          <div className="text-[11px] text-slate-500 font-medium mt-0.5">
+                            {stock.symbol}
+                          </div>
+                        </td>
+
+                        {selectedFilters.map((f) => (
+                          <td
+                            key={f}
+                            className="p-4 text-right text-slate-600"
+                          >
+                            {stock[f]}
+                          </td>
+                        ))}
+
+                        {/* Add to Watchlist Button */}
+                        <td className="p-4 text-right">
+                          <button
+                            onClick={() => {
+                              setStockToAdd(`${stock.name} (${stock.symbol})`);
+                              setSelectedWatchlist(watchlists[0] || "My Watchlist");
+                              setWatchlistModal(true);
+                            }}
+                            className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center hover:bg-slate-100"
+                          >
+                            +
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>

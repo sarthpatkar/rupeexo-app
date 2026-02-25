@@ -2,7 +2,6 @@
 
 import { useState, useId } from "react"
 import { createClient } from "../../../lib/supabase/client"
-import { useRouter } from "next/navigation"
 
 // ─── Internal Helper Components ───────────────────────────────────────────────
 
@@ -252,12 +251,12 @@ export default function SignUpPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [authError, setAuthError] = useState("")
+  const [authMessage, setAuthMessage] = useState("")
 
   const currentErrors = validateForm(form)
   const isValid = Object.keys(currentErrors).length === 0
   const strength = getPasswordStrength(form.password)
-
-  const router = useRouter()
 
   function handleChange(e) {
     const { name, value, type, checked } = e.target
@@ -282,50 +281,70 @@ export default function SignUpPage() {
     e.preventDefault()
     setSubmitted(true)
     setTouched({ fullName: true, email: true, password: true, confirmPassword: true, terms: true })
+    setAuthError("")
+    setAuthMessage("")
 
     if (!isValid) return
 
     setIsLoading(true)
 
-    const supabase = createClient()
-
-    const { error } = await supabase.auth.signUp({
-      email: form.email,
-      password: form.password,
-      options: {
-        data: {
-          full_name: form.fullName,
+    try {
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      },
-    })
+        body: JSON.stringify({
+          fullName: form.fullName,
+          email: form.email,
+          password: form.password,
+        }),
+      })
 
-    setIsLoading(false)
+      const payload = await res.json().catch(() => ({}))
 
-    if (error) {
-      alert(error.message)
-      return
+      if (!res.ok) {
+        setAuthError(payload?.error || "Signup failed. Please try again.")
+        return
+      }
+
+      setAuthMessage(
+        payload?.message || "Account created. Verify your email from inbox, then login."
+      )
+      setTimeout(() => {
+        window.location.assign("/login")
+      }, 1200)
+    } catch {
+      setAuthError("Unable to reach signup server. Check your internet or try again.")
+    } finally {
+      setIsLoading(false)
     }
-
-    router.push("/dashboard")
   }
 
   async function handleGoogleLogin() {
-    const supabase = createClient()
+    setAuthError("")
+    setAuthMessage("")
 
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${location.origin}/dashboard`,
-      },
-    })
+    try {
+      const supabase = createClient()
 
-    if (error) {
-      alert(error.message)
-      return
-    }
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${location.origin}/dashboard`,
+        },
+      })
 
-    if (data?.url) {
-      window.location.href = data.url
+      if (error) {
+        setAuthError(error.message)
+        return
+      }
+
+      if (data?.url) {
+        window.location.href = data.url
+      }
+    } catch {
+      setAuthError("Unable to connect to Google login right now. Try again.")
     }
   }
 
@@ -648,6 +667,26 @@ export default function SignUpPage() {
                     "Create Account"
                   )}
                 </button>
+
+                {authError && (
+                  <p
+                    role="alert"
+                    className="text-center text-sm"
+                    style={{ color: "#b91c1c", marginTop: "-4px" }}
+                  >
+                    {authError}
+                  </p>
+                )}
+
+                {authMessage && (
+                  <p
+                    role="status"
+                    className="text-center text-sm"
+                    style={{ color: "#15803d", marginTop: "-4px" }}
+                  >
+                    {authMessage}
+                  </p>
+                )}
 
                 {/* Security Note */}
                 <p className="text-center text-xs" style={{ color: "#94a3b8", marginTop: "-8px" }}>
