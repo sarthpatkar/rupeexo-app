@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
+import { SUPABASE_AUTH_STORAGE_KEY } from "./constants"
 
 export async function createClient() {
   // Support both sync and async cookies() across Next.js versions
@@ -12,6 +13,9 @@ export async function createClient() {
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     {
+      auth: {
+        storageKey: SUPABASE_AUTH_STORAGE_KEY,
+      },
       cookies: {
         get(name) {
           return cookieStore.get?.(name)?.value

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { createServerClient } from "@supabase/ssr"
+import { SUPABASE_AUTH_STORAGE_KEY } from "../../../lib/supabase/constants"
 
 export async function GET(request) {
   const requestUrl = new URL(request.url)
@@ -17,6 +18,9 @@ export async function GET(request) {
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     {
+      auth: {
+        storageKey: SUPABASE_AUTH_STORAGE_KEY,
+      },
       cookies: {
         get(name) {
           return request.cookies.get(name)?.value

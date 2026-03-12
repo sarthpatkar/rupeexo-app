@@ -1,4 +1,5 @@
 import { createBrowserClient } from "@supabase/ssr"
+import { SUPABASE_AUTH_STORAGE_KEY } from "./constants"
 
 const GLOBAL_STATE_KEY = "__RUPEEXO_SUPABASE_STATE__"
 
@@ -52,7 +53,7 @@ export function createClient() {
 
   state.client = createBrowserClient(url, key, {
     auth: {
-      storageKey: "rupeexo-auth-token",
+      storageKey: SUPABASE_AUTH_STORAGE_KEY,
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: false,
